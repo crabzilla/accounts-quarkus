@@ -20,8 +20,7 @@ class AccountsFactory {
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext,
-             json: ObjectMapper, projector: AccountOpenedProjector)
+  fun create(context: CrabzillaContext, json: ObjectMapper, projector: AccountOpenedProjector)
   : CommandController<Account, AccountCommand, AccountEvent> {
     return Pair(JacksonJsonObjectSerDer(json, accountComponent),
       CommandControllerOptions(eventProjector = projector))
