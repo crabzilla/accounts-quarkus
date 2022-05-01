@@ -28,7 +28,6 @@ class PendingTransfersVerticle(@Inject private val crabzillaContext: CrabzillaCo
   override fun start() {
 
     // TODO use a subscriber to be greedy
-
 //    val pgSubscriber = PgSubscriber.subscriber(vertx, PgConnectOptionsFactory.from(PgConfigFactory.toPgConfig(config)))
 
     val acctSerDer = JacksonJsonObjectSerDer(json, accountComponent)
