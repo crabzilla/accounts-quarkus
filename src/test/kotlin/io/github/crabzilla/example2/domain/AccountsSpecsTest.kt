@@ -1,10 +1,10 @@
 package io.github.crabzilla.example2.domain
 
+import io.github.crabzilla.core.FeatureSpecification
 import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
 import io.github.crabzilla.example2.accounts.AccountEvent.AccountOpened
 import io.github.crabzilla.example2.accounts.AccountEvent.MoneyDeposited
 import io.github.crabzilla.example2.accounts.AccountEvent.MoneyWithdrawn
-import io.github.crabzilla.core.TestSpecification
 import io.github.crabzilla.example2.accounts.Account
 import io.github.crabzilla.example2.accounts.AccountBalanceNotEnough
 import io.github.crabzilla.example2.accounts.AccountCommand
@@ -21,7 +21,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when opening an account`() {
-    TestSpecification(accountComponent)
+    FeatureSpecification(accountComponent)
       .whenCommand(AccountCommand.OpenAccount(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1") }
       .then { it.events() shouldBe listOf(AccountOpened(id, "cpf1", "person1")) }
@@ -29,7 +29,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when depositing $2000`() {
-    TestSpecification(accountComponent)
+    FeatureSpecification(accountComponent)
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .whenCommand(DepositMoney(2000.00))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 2000.00) }
@@ -43,7 +43,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when depositing $2500`() {
-    TestSpecification(accountComponent)
+    FeatureSpecification(accountComponent)
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 0.00) }
       .then {
@@ -56,7 +56,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when withdrawing 100 from an account with balance = 110`() {
-    TestSpecification(accountComponent)
+    FeatureSpecification(accountComponent)
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .whenCommand(DepositMoney(110.00))
       .whenCommand(AccountCommand.WithdrawMoney(100.00))
@@ -72,7 +72,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when withdrawing 100 from an account with balance = 50`() {
-    TestSpecification(accountComponent)
+    FeatureSpecification(accountComponent)
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 0.00) }
       .then {

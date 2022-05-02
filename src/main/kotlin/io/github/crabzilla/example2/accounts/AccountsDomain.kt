@@ -4,15 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.core.FeatureSession
 import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
 import io.github.crabzilla.example2.accounts.AccountCommand.OpenAccount
 import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
 import io.github.crabzilla.example2.accounts.AccountEvent.AccountOpened
 import io.github.crabzilla.example2.accounts.AccountEvent.MoneyDeposited
 import io.github.crabzilla.example2.accounts.AccountEvent.MoneyWithdrawn
-import io.github.crabzilla.core.CommandComponent
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -80,7 +80,7 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
     }
   }
 
-  override fun handleCommand(command: AccountCommand, state: Account?): CommandSession<Account, AccountEvent> {
+  override fun handleCommand(command: AccountCommand, state: Account?): FeatureSession<Account, AccountEvent> {
     return when (command) {
       is OpenAccount -> {
         if (state != null) throw AccountAlreadyExists(command.id)
@@ -98,7 +98,7 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
   }
 }
 
-val accountComponent = CommandComponent(
+val accountComponent = FeatureComponent(
   Account::class,
   AccountCommand::class,
   AccountEvent::class,

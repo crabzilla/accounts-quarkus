@@ -1,11 +1,12 @@
 package io.github.crabzilla.example2.transfers
 
+import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.CommandSideEffect
+import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.example2.accounts.Account
 import io.github.crabzilla.example2.accounts.AccountCommand
 import io.github.crabzilla.example2.accounts.AccountEvent
-import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.CommandSideEffect
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.slf4j.Logger
@@ -13,8 +14,8 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class TransferService(
-  private val acctController: CommandController<Account, AccountCommand, AccountEvent>,
-  private val transferController: CommandController<Transfer, TransferCommand, TransferEvent>) {
+  private val acctController: FeatureController<Account, AccountCommand, AccountEvent>,
+  private val transferController: FeatureController<Transfer, TransferCommand, TransferEvent>) {
   
   companion object {
     private val log: Logger = LoggerFactory.getLogger(TransferService::class.java)

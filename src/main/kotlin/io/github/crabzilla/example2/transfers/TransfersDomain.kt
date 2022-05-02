@@ -1,13 +1,13 @@
 package io.github.crabzilla.example2.transfers
 
+import io.github.crabzilla.core.CommandHandler
+import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.core.FeatureComponent
+import io.github.crabzilla.core.FeatureSession
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
-import io.github.crabzilla.core.CommandComponent
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.CommandSession
-import io.github.crabzilla.core.EventHandler
 import java.util.UUID
 
 sealed class TransferEvent {
@@ -62,7 +62,7 @@ class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, Transfe
       return listOf(TransferRequested(id, amount, fromAccountId, toAccountId))
     }
   }
-  override fun handleCommand(command: TransferCommand, state: Transfer?): CommandSession<Transfer, TransferEvent> {
+  override fun handleCommand(command: TransferCommand, state: Transfer?): FeatureSession<Transfer, TransferEvent> {
     return when (command) {
       is RequestTransfer -> {
         if (state != null) throw TransferAlreadyExists(command.id)
@@ -78,7 +78,7 @@ class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, Transfe
   }
 }
 
-val transferComponent = CommandComponent(
+val transferComponent = FeatureComponent(
   Transfer::class,
   TransferCommand::class,
   TransferEvent::class,

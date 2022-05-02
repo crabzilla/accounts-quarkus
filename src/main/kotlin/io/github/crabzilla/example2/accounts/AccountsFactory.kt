@@ -3,8 +3,8 @@ package io.github.crabzilla.example2.accounts
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.CrabzillaContext
-import io.github.crabzilla.command.CommandController
-import io.github.crabzilla.command.CommandControllerOptions
+import io.github.crabzilla.command.FeatureController
+import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.example2.transfers.PendingTransfersVerticle
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.github.crabzilla.projection.ProjectorConfig
@@ -21,9 +21,9 @@ class AccountsFactory {
 
   @ApplicationScoped
   fun create(context: CrabzillaContext, json: ObjectMapper, projector: AccountOpenedProjector)
-  : CommandController<Account, AccountCommand, AccountEvent> {
+  : FeatureController<Account, AccountCommand, AccountEvent> {
     return Pair(JacksonJsonObjectSerDer(json, accountComponent),
-      CommandControllerOptions(eventProjector = projector))
+      FeatureOptions(eventProjector = projector))
       .let {
         context.commandController(accountComponent, it.first, it.second)
       }
