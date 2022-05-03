@@ -1,10 +1,8 @@
 package io.github.crabzilla.example2.transfers
 
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.CrabzillaContext
-import io.github.crabzilla.example2.accounts.accountComponent
-import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
+import io.github.crabzilla.example2.transfers.TransferService.Companion.PendingTransfer
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.sqlclient.Row
@@ -12,12 +10,10 @@ import io.vertx.sqlclient.RowSet
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 import javax.enterprise.context.ApplicationScoped
-import javax.inject.Inject
 
 //@ApplicationScoped
-class PendingTransfersVerticle(@Inject private val crabzillaContext: CrabzillaContext,
-                               @Inject private val json: ObjectMapper
-) : AbstractVerticle() {
+class PendingTransfersVerticle(private val crabzillaContext: CrabzillaContext,
+                               private val service: TransferService) : AbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
@@ -29,14 +25,6 @@ class PendingTransfersVerticle(@Inject private val crabzillaContext: CrabzillaCo
 
     // TODO use a subscriber to be greedy
 //    val pgSubscriber = PgSubscriber.subscriber(vertx, PgConnectOptionsFactory.from(PgConfigFactory.toPgConfig(config)))
-
-    val acctSerDer = JacksonJsonObjectSerDer(json, accountComponent)
-    val acctController = crabzillaContext.commandController(accountComponent, acctSerDer)
-
-    val transferSerDer = JacksonJsonObjectSerDer(json, transferComponent)
-    val transferController = crabzillaContext.commandController(transferComponent, transferSerDer)
-
-    val service = TransferService(acctController, transferController)
 
     log.info("Starting with interval (ms) = {}", config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
 
@@ -76,12 +64,12 @@ class PendingTransfersVerticle(@Inject private val crabzillaContext: CrabzillaCo
   /**
    * Get 100 first pending transfers
    */
-  private fun getPendingTransfers(): Future<List<TransferService.PendingTransfer>> {
+  private fun getPendingTransfers(): Future<List<PendingTransfer>> {
     return crabzillaContext.pgPool.preparedQuery("select * from transfers_view where pending = true LIMIT 100")
       .execute()
       .map { rs: RowSet<Row> ->
         rs.iterator().asSequence().map { row ->
-          TransferService.PendingTransfer(
+          PendingTransfer(
             row.getUUID("id"),
             row.getDouble("amount"),
             row.getUUID("from_acct_id"),

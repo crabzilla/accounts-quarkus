@@ -7,6 +7,7 @@ import io.vertx.core.Future.succeededFuture
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
+import javax.enterprise.context.ApplicationScoped
 
 class AccountsView1Projector : EventProjector {
 

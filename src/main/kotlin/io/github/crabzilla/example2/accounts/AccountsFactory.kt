@@ -20,10 +20,10 @@ class AccountsFactory {
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext, json: ObjectMapper, projector: AccountOpenedProjector)
+  fun create(context: CrabzillaContext, json: ObjectMapper)
   : FeatureController<Account, AccountCommand, AccountEvent> {
     return Pair(JacksonJsonObjectSerDer(json, accountComponent),
-      FeatureOptions(eventProjector = projector))
+      FeatureOptions(eventProjector = AccountOpenedProjector(json)))
       .let {
         context.commandController(accountComponent, it.first, it.second)
       }
@@ -31,7 +31,8 @@ class AccountsFactory {
 
   @ApplicationScoped
   fun create(context: CrabzillaContext): AbstractVerticle {
-    return context.postgresProjector(ProjectorConfig(projectionName), AccountsView1Projector())
+    val config = ProjectorConfig(projectionName, stateTypes = listOf("Account"))
+    return context.postgresProjector(config, AccountsView1Projector())
   }
 
 }

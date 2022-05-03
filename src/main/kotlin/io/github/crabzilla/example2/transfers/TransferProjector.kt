@@ -14,6 +14,7 @@ class TransferProjector : EventProjector {
     private val log = LoggerFactory.getLogger(TransferProjector::class.java)
   }
 
+  // TODO propagate causation and correlation ids
   override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
     fun request(id: UUID): Future<Void> {
       val (payload, metadata, id) = record.extract()

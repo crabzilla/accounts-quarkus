@@ -12,19 +12,21 @@ import io.vertx.core.Promise
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.UUID
+import javax.enterprise.context.ApplicationScoped
 
+@ApplicationScoped
 class TransferService(
   private val acctController: FeatureController<Account, AccountCommand, AccountEvent>,
   private val transferController: FeatureController<Transfer, TransferCommand, TransferEvent>) {
   
   companion object {
     private val log: Logger = LoggerFactory.getLogger(TransferService::class.java)
-  }
 
-  data class PendingTransfer(
-    val id: UUID, val amount: Double, val fromAccountId: UUID, val toAccountId: UUID,
-    val causationId: UUID, val correlationId: UUID,
-  )
+    data class PendingTransfer(
+      val id: UUID, val amount: Double, val fromAccountId: UUID, val toAccountId: UUID,
+      val causationId: UUID, val correlationId: UUID,
+    )
+  }
 
   /**
    * Steps within the same db transaction:
@@ -39,7 +41,7 @@ class TransferService(
     val transferId = pendingTransfer.id
     val correlationId = pendingTransfer.correlationId
 
-    acctController.compose { conn ->
+    acctController.withinTransaction { conn ->
       log.info("Step 1 - Will withdrawn from account {}", pendingTransfer.fromAccountId)
       val withdrawnMetadata = CommandMetadata.new(
         stateId = pendingTransfer.fromAccountId,

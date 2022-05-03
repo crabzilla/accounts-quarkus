@@ -11,8 +11,6 @@ import io.vertx.sqlclient.Tuple
 import java.util.UUID
 import javax.enterprise.context.ApplicationScoped
 
-// TODO propagate causation and correlation ids
-@ApplicationScoped
 class AccountOpenedProjector(private val json: ObjectMapper) : EventProjector {
 
   override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
