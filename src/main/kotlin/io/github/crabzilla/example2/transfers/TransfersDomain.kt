@@ -1,15 +1,26 @@
 package io.github.crabzilla.example2.transfers
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
+import io.github.crabzilla.example2.accounts.AccountEvent
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
 import java.util.UUID
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+@JsonSubTypes(
+  JsonSubTypes.Type(TransferRequested::class, name = "TransferRequested"),
+  JsonSubTypes.Type(TransferConcluded::class, name = "TransferConcluded")
+)
 sealed class TransferEvent {
   data class TransferRequested(val id: UUID,
                                val amount: Double = 0.00,
@@ -19,6 +30,12 @@ sealed class TransferEvent {
 
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+@JsonSubTypes(
+  JsonSubTypes.Type(RequestTransfer::class, name = "RequestTransfer"),
+  JsonSubTypes.Type(RegisterResult::class, name = "RegisterResult")
+)
 sealed class TransferCommand {
   data class RequestTransfer(val id: UUID,
                              val amount: Double = 0.00,

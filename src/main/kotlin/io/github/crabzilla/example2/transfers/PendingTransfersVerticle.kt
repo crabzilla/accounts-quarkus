@@ -1,18 +1,16 @@
 package io.github.crabzilla.example2.transfers
 
 
-import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.example2.transfers.TransferService.Companion.PendingTransfer
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
+import io.vertx.pgclient.PgPool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
-import javax.enterprise.context.ApplicationScoped
 
-//@ApplicationScoped
-class PendingTransfersVerticle(private val crabzillaContext: CrabzillaContext,
+class PendingTransfersVerticle(private val pgPool: PgPool,
                                private val service: TransferService) : AbstractVerticle() {
 
   companion object {
@@ -65,7 +63,7 @@ class PendingTransfersVerticle(private val crabzillaContext: CrabzillaContext,
    * Get 100 first pending transfers
    */
   private fun getPendingTransfers(): Future<List<PendingTransfer>> {
-    return crabzillaContext.pgPool.preparedQuery("select * from transfers_view where pending = true LIMIT 100")
+    return pgPool.preparedQuery("select * from transfers_view where pending = true LIMIT 100")
       .execute()
       .map { rs: RowSet<Row> ->
         rs.iterator().asSequence().map { row ->

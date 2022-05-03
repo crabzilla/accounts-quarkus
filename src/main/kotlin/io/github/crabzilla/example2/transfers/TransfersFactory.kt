@@ -7,6 +7,7 @@ import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.github.crabzilla.projection.ProjectorConfig
 import io.vertx.core.AbstractVerticle
+import io.vertx.pgclient.PgPool
 import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 
@@ -30,6 +31,12 @@ class TransfersFactory {
   fun create(context: CrabzillaContext): AbstractVerticle {
     val config = ProjectorConfig(projectionName, stateTypes = listOf("Transfer"))
     return context.postgresProjector(config, TransferProjector())
+  }
+
+  @ApplicationScoped
+  fun create(pgPool: PgPool, service: TransferService): AbstractVerticle {
+    log.info("******************** $pgPool")
+    return PendingTransfersVerticle(pgPool, service)
   }
 
 }
