@@ -25,7 +25,7 @@ class AccountsFactory {
     return Pair(JacksonJsonObjectSerDer(json, accountComponent),
       FeatureOptions(eventProjector = AccountOpenedProjector(json)))
       .let {
-        context.commandController(accountComponent, it.first, it.second)
+        context.featureController(accountComponent, it.first, it.second)
       }
   }
 

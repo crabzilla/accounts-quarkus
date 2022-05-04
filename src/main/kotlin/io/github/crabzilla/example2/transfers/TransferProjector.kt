@@ -7,7 +7,9 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 import java.util.UUID
+import javax.enterprise.context.ApplicationScoped
 
+@ApplicationScoped
 class TransferProjector : EventProjector {
 
   companion object {

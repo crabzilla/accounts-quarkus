@@ -17,7 +17,10 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
     private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
     private val node = ManagementFactory.getRuntimeMXBean().name
     private const val DEFAULT_INTERVAL = 30_000L
+    const val HANDLE_ENDPOINT = "PendingTransfersVerticle.handle"
   }
+
+  private var isBusy: Boolean = false
 
   override fun start() {
 
@@ -26,7 +29,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
 
     log.info("Starting with interval (ms) = {}", config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
 
-    vertx.eventBus().consumer<String>("crabzilla." + this::class.java.name + ".ping") { msg ->
+    vertx.eventBus().consumer<String>(HANDLE_ENDPOINT) { msg ->
       log.info("Received a request to pull and process")
       pullAndProcess(service)
         .onComplete {
@@ -45,6 +48,10 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
   }
 
   private fun pullAndProcess(service: TransferService): Future<Void> {
+    if (isBusy) {
+      log.info("Still busy.. wil try next time")
+      return Future.succeededFuture()
+    }
     return getPendingTransfers()
       .compose { pendingList ->
         log.info("Found ${pendingList.size} pending transfers")
@@ -56,6 +63,8 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
             service.transfer(pendingTransfer)
           }
         }
+      }.onComplete {
+        isBusy = false
       }
   }
 

@@ -23,7 +23,7 @@ class TransfersCommandService(val controller: FeatureController<Transfer, Transf
     return controller.handle(request.metadata, request.command)
       .onComplete {
         if (it.succeeded()) {
-          log.info("Successfully handled ${request.command::class::simpleName}")
+          log.info("Successfully handled ${request.command::class.java.simpleName}")
           promise.complete(it.result().toJsonArray())
         } else {
           log.error("Failed to handle command ${request.command::class.java.simpleName}: ${it.cause().message}")

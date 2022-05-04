@@ -68,6 +68,7 @@ class TransferService(
           transferController.handle(conn, registerSuccessMetadata, registerSuccessCommand)
             .map { r2 }
         }.onSuccess {
+          log.info("Success !!!")
           promise.complete()
         }.onFailure { error ->
           // new transaction

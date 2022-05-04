@@ -1,4 +1,4 @@
-package io.github.crabzilla.example2.domain
+package io.github.crabzilla
 
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
@@ -8,8 +8,10 @@ import io.github.crabzilla.example2.transfers.TransferCommand
 import io.github.crabzilla.example2.transfers.transferComponent
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
+import io.quarkus.test.junit.QuarkusTest
 import java.util.UUID
 
+@QuarkusTest
 class TransfersSpecsTest : AnnotationSpec() {
 
   companion object {

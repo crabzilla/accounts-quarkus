@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.eventbus.EventBus
 import io.vertx.mutiny.pgclient.PgPool
+import io.vertx.mutiny.sqlclient.Row
 import org.jboss.resteasy.reactive.RestPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,26 +34,21 @@ class TransfersResource(private val bus: EventBus, private val pgPool: PgPool) {
   fun view1(): Multi<JsonObject> {
     return pgPool.query("SELECT * from transfers_view").execute()
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
-      .onItem().transform { row: io.vertx.mutiny.sqlclient.Row ->
-        row.toJson()
-      }
+      .onItem().transform { row: Row -> row.toJson() }
   }
   
   @PUT
   @Path("/{stateId}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  fun open(request: RequestTransferRequest, @RestPath("stateId") stateId: UUID): Uni<JsonArray> {
+  fun open(@RestPath("stateId") stateId: UUID, request: RequestTransferRequest): Uni<JsonArray> {
     val command = RequestTransfer(stateId, request.amount, request.fromAccountId, request.toAccountId)
     log.info("command $command")
     val metadata = CommandMetadata.new(stateId)
     val commandRequest = TransferCommandRequest(metadata, command)
     return bus.request<JsonArray>("command:transfers", commandRequest)
       .onItem()
-      .transform {
-        log.info(it.body().encodePrettily())
-        it.body()
-      }
+      .transform { it.body() }
   }
 
 }

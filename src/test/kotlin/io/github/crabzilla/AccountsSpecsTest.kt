@@ -1,4 +1,4 @@
-package io.github.crabzilla.example2.domain
+package io.github.crabzilla
 
 import io.github.crabzilla.core.FeatureSpecification
 import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
@@ -13,8 +13,10 @@ import io.github.crabzilla.example2.accounts.accountComponent
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
+import io.quarkus.test.junit.QuarkusTest
 import java.util.UUID
 
+@QuarkusTest
 class AccountsSpecsTest : AnnotationSpec() {
 
   private val id: UUID = UUID.randomUUID()

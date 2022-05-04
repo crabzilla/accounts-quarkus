@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Multi
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.eventbus.EventBus
 import io.vertx.mutiny.pgclient.PgPool
+import io.vertx.mutiny.sqlclient.Row
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import javax.ws.rs.GET
@@ -26,9 +27,7 @@ internal class CrabzillaResource(private val bus: EventBus, private val pgPool: 
   fun projections(): Multi<JsonObject> {
     return pgPool.query("SELECT * from projections").execute()
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
-      .onItem().transform { row: io.vertx.mutiny.sqlclient.Row ->
-        row.toJson()
-      }
+      .onItem().transform { row: Row -> row.toJson() }
   }
 
   @GET
@@ -37,9 +36,7 @@ internal class CrabzillaResource(private val bus: EventBus, private val pgPool: 
   fun view1(): Multi<JsonObject> {
     return pgPool.query("SELECT * from commands order by inserted_on").execute()
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
-      .onItem().transform { row: io.vertx.mutiny.sqlclient.Row ->
-        row.toJson()
-      }
+      .onItem().transform { row: Row -> row.toJson() }
   }
 
   @GET()
@@ -48,7 +45,7 @@ internal class CrabzillaResource(private val bus: EventBus, private val pgPool: 
   fun query(): Multi<EventRecord> {
     return pgPool.query("SELECT * from events order by sequence").execute()
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
-      .onItem().transform { row: io.vertx.mutiny.sqlclient.Row ->
+      .onItem().transform { row: Row ->
         val eventMetadata = EventMetadata(
           row.getString("state_type"),
           row.getUUID("state_id"),

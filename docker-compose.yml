@@ -12,8 +12,8 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
-#    networks:
-#      - accounts-quarkus
+    networks:
+      - accounts-quarkus
 
 #  kafka:
 #    image: bashj79/kafka-kraft
@@ -25,10 +25,10 @@ services:
 #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-#networks:
-#  accounts-quarkus:
-#    ipam:
-#      config:
-#        - subnet: 172.19.188.1/25
-#      driver:
-#        default
+networks:
+  accounts-quarkus:
+    ipam:
+      config:
+        - subnet: 172.19.181.1/25
+      driver:
+        default

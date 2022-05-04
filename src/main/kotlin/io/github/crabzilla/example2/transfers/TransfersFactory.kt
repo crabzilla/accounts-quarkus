@@ -2,6 +2,7 @@ package io.github.crabzilla.example2.transfers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.EventProjector
 import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
@@ -19,23 +20,22 @@ class TransfersFactory {
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext, json: ObjectMapper)
+  fun create(context: CrabzillaContext, json: ObjectMapper, projector: TransferProjector)
           : FeatureController<Transfer, TransferCommand, TransferEvent> {
-    return Pair(JacksonJsonObjectSerDer(json, transferComponent), FeatureOptions())
+    return Pair(JacksonJsonObjectSerDer(json, transferComponent), FeatureOptions(eventProjector = projector))
       .let {
-        context.commandController(transferComponent, it.first, it.second)
+        context.featureController(transferComponent, it.first, it.second)
       }
   }
 
-  @ApplicationScoped
-  fun create(context: CrabzillaContext): AbstractVerticle {
-    val config = ProjectorConfig(projectionName, stateTypes = listOf("Transfer"))
-    return context.postgresProjector(config, TransferProjector())
-  }
+//  @ApplicationScoped
+//  fun create(context: CrabzillaContext): AbstractVerticle {
+//    val config = ProjectorConfig(projectionName, stateTypes = listOf("Transfer"))
+//    return context.postgresProjector(config, TransferProjector())
+//  }
 
   @ApplicationScoped
   fun create(pgPool: PgPool, service: TransferService): AbstractVerticle {
-    log.info("******************** $pgPool")
     return PendingTransfersVerticle(pgPool, service)
   }
 
