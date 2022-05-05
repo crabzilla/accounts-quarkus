@@ -8,6 +8,8 @@ import io.github.crabzilla.example2.accounts.AccountEvent.MoneyWithdrawn
 import io.github.crabzilla.example2.accounts.Account
 import io.github.crabzilla.example2.accounts.AccountBalanceNotEnough
 import io.github.crabzilla.example2.accounts.AccountCommand
+import io.github.crabzilla.example2.accounts.AccountCommand.OpenAccount
+import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
 import io.github.crabzilla.example2.accounts.DepositExceeded
 import io.github.crabzilla.example2.accounts.accountComponent
 import io.kotest.assertions.throwables.shouldThrow
@@ -24,7 +26,7 @@ class AccountsSpecsTest : AnnotationSpec() {
   @Test
   fun `when opening an account`() {
     FeatureSpecification(accountComponent)
-      .whenCommand(AccountCommand.OpenAccount(id, "cpf1", "person1"))
+      .whenCommand(OpenAccount(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1") }
       .then { it.events() shouldBe listOf(AccountOpened(id, "cpf1", "person1")) }
   }
@@ -61,7 +63,7 @@ class AccountsSpecsTest : AnnotationSpec() {
     FeatureSpecification(accountComponent)
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .whenCommand(DepositMoney(110.00))
-      .whenCommand(AccountCommand.WithdrawMoney(100.00))
+      .whenCommand(WithdrawMoney(100.00))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 10.00) }
       .then {
         it.events() shouldBe listOf(
@@ -79,7 +81,7 @@ class AccountsSpecsTest : AnnotationSpec() {
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 0.00) }
       .then {
         val exception = shouldThrow<AccountBalanceNotEnough> {
-          it.whenCommand(AccountCommand.WithdrawMoney(2500.00))
+          it.whenCommand(WithdrawMoney(2500.00))
         }
         exception.message shouldBe "Account $id doesn't have enough balance"
       }
