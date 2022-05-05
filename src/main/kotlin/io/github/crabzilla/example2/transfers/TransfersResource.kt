@@ -1,13 +1,13 @@
 package io.github.crabzilla.example2.transfers
 
 import io.github.crabzilla.command.CommandMetadata
+import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
-import io.github.crabzilla.example2.transfers.TransfersCommandService.Companion.TransferCommandRequest
+import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.mutiny.core.eventbus.EventBus
 import io.vertx.mutiny.pgclient.PgPool
 import io.vertx.mutiny.sqlclient.Row
 import org.jboss.resteasy.reactive.RestPath
@@ -22,7 +22,8 @@ import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
 @Path("/transfers")
-class TransfersResource(private val bus: EventBus, private val pgPool: PgPool) {
+class TransfersResource(private val pgPool: PgPool,
+                        private val controller: FeatureController<Transfer, TransferCommand, TransferEvent>) {
 
   companion object {
     private val log: Logger = LoggerFactory.getLogger(TransfersResource::class.java)
@@ -45,10 +46,8 @@ class TransfersResource(private val bus: EventBus, private val pgPool: PgPool) {
     val command = RequestTransfer(stateId, request.amount, request.fromAccountId, request.toAccountId)
     log.info("command $command")
     val metadata = CommandMetadata.new(stateId)
-    val commandRequest = TransferCommandRequest(metadata, command)
-    return bus.request<JsonArray>("command:transfers", commandRequest)
-      .onItem()
-      .transform { it.body() }
+    val future = controller.handle(metadata, command).map { it.toJsonArray() }
+    return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
 }

@@ -1,5 +1,6 @@
 package io.github.crabzilla
 
+import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
@@ -24,8 +25,7 @@ import javax.inject.Inject
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsResourceTest {
 
-  var projectionName = "integration.projectors.accounts.AccountsView"
-  var projectorEndpoints = ProjectorEndpoints(projectionName)
+  var projectorEndpoints = ProjectorEndpoints(AccountsFactory.projectionName)
 
   @Inject
   var vertx: Vertx? = null

@@ -1,9 +1,11 @@
 package io.github.crabzilla
 
+import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.transfers.PendingTransfersVerticle
-import io.github.crabzilla.example2.transfers.RequestTransferRequest
+import io.github.crabzilla.example2.transfers.TransfersRequests
+import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
 import io.github.crabzilla.projection.ProjectorEndpoints
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
@@ -26,17 +28,20 @@ import javax.inject.Inject
 internal class TransfersResourceTest {
 
   @Inject
-  var vertx: Vertx? = null
+  lateinit var vertx: Vertx
 
   @Inject
-  var pgPool: PgPool? = null
+  lateinit var pgPool: PgPool
+
+  val accountsProjectorEndpoints = ProjectorEndpoints(AccountsFactory.projectionName)
+
   @Test
   @Order(1)
   fun `There no transfers`() {
-    pgPool!!.query("delete from events").execute()
-      .flatMap { pgPool!!.query("delete from commands").execute() }
-      .flatMap { pgPool!!.query("delete from accounts_view").execute() }
-      .flatMap { pgPool!!.query("delete from transfers_view").execute() }
+    pgPool.query("delete from events").execute()
+      .flatMap { pgPool.query("delete from commands").execute() }
+      .flatMap { pgPool.query("delete from accounts_view").execute() }
+      .flatMap { pgPool.query("delete from transfers_view").execute() }
       .await().indefinitely()
     RestAssured.given()
       .contentType(ContentType.JSON)
@@ -122,8 +127,8 @@ internal class TransfersResourceTest {
   @Order(6)
   fun `checking accounts and transfers view`() {
 
-    vertx!!.eventBus().request<Any>(PendingTransfersVerticle.HANDLE_ENDPOINT, null)
-      .flatMap { vertx!!.eventBus().request<Any>(accountsProjectorEndpoints.handle(), null) }
+    vertx.eventBus().request<Any>(PendingTransfersVerticle.HANDLE_ENDPOINT, null)
+      .flatMap { vertx.eventBus().request<Any>(accountsProjectorEndpoints.handle(), null) }
       .await().indefinitely()
 
     val response = RestAssured.given()
@@ -162,10 +167,6 @@ internal class TransfersResourceTest {
   companion object {
     val account1Id: UUID = UUID.randomUUID()
     val account2Id: UUID = UUID.randomUUID()
-    val accountsProjectorEndpoints: ProjectorEndpoints =
-      ProjectorEndpoints("integration.projectors.accounts.AccountsView")
-    val transferProjectorEndpoints: ProjectorEndpoints =
-      ProjectorEndpoints("integration.projectors.transfers.TransfersView")
     val transferId: UUID = UUID.randomUUID()
   }
 }
