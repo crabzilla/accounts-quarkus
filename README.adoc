@@ -45,7 +45,7 @@ mvn clean install
 docker-compose up
 ```
 
-2 - Run the using QUarkus dev mode:
+2 - Run the using Quarkus dev mode:
 ```
 mvn compile quarkus:dev
 ```
