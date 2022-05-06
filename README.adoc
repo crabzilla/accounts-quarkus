@@ -10,7 +10,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 = Accounts Quarkus
 
-image:https://img.shields.io/badge/crabzilla.v0.4.9-orange.svg[link="https://github.com/crabzilla/crabzilla"]
+image:https://img.shields.io/badge/crabzilla.v0.5.1-orange.svg[link="https://github.com/crabzilla/crabzilla"]
 https://github.com/crabzilla/accounts-quarkus/actions/workflows/blank.yml[image:https://github.com/crabzilla/accounts-quarkus/actions/workflows/blank.yml/badge.svg[CI]]
 https://codecov.io/gh/crabzilla/accounts-quarkus[image:https://codecov.io/gh/crabzilla/accounts-quarkus/branch/main/graph/badge.svg?[codecov]]
 
