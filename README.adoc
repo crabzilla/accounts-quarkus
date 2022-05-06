@@ -102,3 +102,9 @@ And you will see something like:
 
 ```
 
+== Exploring api
+
+Just open
+```
+http://localhost:8080/q/swagger-ui/#/
+```
