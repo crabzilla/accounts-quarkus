@@ -50,6 +50,10 @@ docker-compose up
 mvn compile quarkus:dev
 ```
 
+3 - Exploring api
+
+Just open http://localhost:8080/q/swagger-ui/#/[OpenApi]
+
 === Transfer test
 
 Open an account 1 with 110.00 and 2 with 0.00 then make a 100.00 transfer from account 1 to 2:
@@ -102,9 +106,3 @@ And you will see something like:
 
 ```
 
-== Exploring api
-
-Just open
-```
-http://localhost:8080/q/swagger-ui/#/
-```
