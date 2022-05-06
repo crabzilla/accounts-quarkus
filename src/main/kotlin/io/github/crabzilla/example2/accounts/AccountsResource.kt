@@ -39,7 +39,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   @Path("/view1")
   @Produces(APPLICATION_JSON)
   fun view1(): Multi<JsonObject> {
-    return pgPool.query("SELECT * from accounts_view").execute()
+    return pgPool.query("SELECT * from accounts_view order by name").execute()
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
       .onItem().transform { row: Row -> row.toJson() }
   }
