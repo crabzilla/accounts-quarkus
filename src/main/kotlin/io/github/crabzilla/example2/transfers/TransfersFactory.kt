@@ -19,10 +19,9 @@ class TransfersFactory {
   @ApplicationScoped
   fun create(context: CrabzillaContext, json: ObjectMapper, projector: TransferProjector)
           : FeatureController<Transfer, TransferCommand, TransferEvent> {
-    return Pair(JacksonJsonObjectSerDer(json, transferComponent), FeatureOptions(eventProjector = projector))
-      .let {
-        context.featureController(transferComponent, it.first, it.second)
-      }
+    val jsonSerDer = JacksonJsonObjectSerDer(json, transferComponent)
+    val options = FeatureOptions(eventProjector = projector)
+    return context.featureController(transferComponent, jsonSerDer, options)
   }
 
   @ApplicationScoped

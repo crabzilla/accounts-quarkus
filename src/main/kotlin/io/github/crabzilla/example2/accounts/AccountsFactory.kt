@@ -19,11 +19,9 @@ class AccountsFactory {
   @ApplicationScoped
   fun create(context: CrabzillaContext, json: ObjectMapper)
   : FeatureController<Account, AccountCommand, AccountEvent> {
-    return Pair(JacksonJsonObjectSerDer(json, accountComponent),
-      FeatureOptions(eventProjector = AccountOpenedProjector(json)))
-      .let {
-        context.featureController(accountComponent, it.first, it.second)
-      }
+    val jsonSerDer = JacksonJsonObjectSerDer(json, accountComponent)
+    val options = FeatureOptions(eventProjector = AccountOpenedProjector(json))
+    return context.featureController(accountComponent, jsonSerDer, options)
   }
 
   @ApplicationScoped
