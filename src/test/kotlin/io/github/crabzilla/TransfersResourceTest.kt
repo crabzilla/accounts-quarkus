@@ -4,12 +4,12 @@ import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.transfers.PendingTransfersVerticle
-import io.github.crabzilla.example2.transfers.TransfersRequests
 import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
-import io.github.crabzilla.projection.ProjectorEndpoints
+import io.github.crabzilla.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
+import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.Vertx
@@ -32,8 +32,6 @@ internal class TransfersResourceTest {
 
   @Inject
   lateinit var pgPool: PgPool
-
-  val accountsProjectorEndpoints = ProjectorEndpoints(AccountsFactory.projectionName)
 
   @Test
   @Order(1)
@@ -126,9 +124,9 @@ internal class TransfersResourceTest {
   @Test
   @Order(6)
   fun `checking accounts and transfers view`() {
-
+    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
     vertx.eventBus().request<Any>(PendingTransfersVerticle.HANDLE_ENDPOINT, null)
-      .flatMap { vertx.eventBus().request<Any>(accountsProjectorEndpoints.handle(), null) }
+      .flatMap { Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())}
       .await().indefinitely()
 
     val response = RestAssured.given()

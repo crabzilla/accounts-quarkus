@@ -4,10 +4,11 @@ import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
-import io.github.crabzilla.projection.ProjectorEndpoints
+import io.github.crabzilla.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
+import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.Vertx
@@ -19,27 +20,26 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import java.util.UUID
+import javax.annotation.PostConstruct
 import javax.inject.Inject
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountsResourceTest {
-
-  var projectorEndpoints = ProjectorEndpoints(AccountsFactory.projectionName)
+class AccountsResourceTest() {
 
   @Inject
-  var vertx: Vertx? = null
+  lateinit var vertx: Vertx
 
   @Inject
-  var pgPool: PgPool? = null
+  lateinit var pgPool: PgPool
 
   @Test
   @Order(1)
   fun noAccounts() {
-    pgPool!!.query("delete from events").execute()
-      .flatMap { pgPool!!.query("delete from commands").execute() }
-      .flatMap { pgPool!!.query("delete from accounts_view").execute() }
-      .flatMap { pgPool!!.query("delete from transfers_view").execute() }
+    pgPool.query("delete from events").execute()
+      .flatMap { pgPool.query("delete from commands").execute() }
+      .flatMap { pgPool.query("delete from accounts_view").execute() }
+      .flatMap { pgPool.query("delete from transfers_view").execute() }
       .await().indefinitely()
     RestAssured.given()
       .contentType(ContentType.JSON)
@@ -71,7 +71,8 @@ class AccountsResourceTest {
   @Order(3)
   @Throws(InterruptedException::class)
   fun gotAccounts() {
-    vertx!!.eventBus().request<Any>(projectorEndpoints.handle(), null)
+    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
+    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
       .await().indefinitely()
     val response = RestAssured.given()
       .contentType(ContentType.JSON)
@@ -126,8 +127,8 @@ class AccountsResourceTest {
   @Order(6)
   @Throws(InterruptedException::class)
   fun gotAccountWith400() {
-    vertx!!.eventBus().request<Any>(projectorEndpoints.handle(), null)
-      .await().indefinitely()
+    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
+    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
     val response = RestAssured.given()
       .contentType(ContentType.JSON)
       .`when`()["/accounts/view1"]

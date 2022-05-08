@@ -50,7 +50,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   @Produces(APPLICATION_JSON)
   fun open(@RestPath("stateId") stateId: UUID, request: OpenAccountRequest): Uni<JsonArray> {
     val command = OpenAccount(stateId, request.cpf, request.name)
-    log.info("command $command")
+    log.debug("command $command")
     val metadata = CommandMetadata.new(stateId)
     val future = controller.handle(metadata, command).map { it.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
@@ -63,7 +63,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   @Produces(APPLICATION_JSON)
   fun deposit(@RestPath("stateId") stateId: UUID, request: DepositMoneyRequest): Uni<JsonArray> {
     val command = DepositMoney(request.amount)
-    log.info("command $stateId - $command")
+    log.debug("command $stateId - $command")
     val metadata = CommandMetadata.new(stateId)
     val future = controller.handle(metadata, command).map { it.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
@@ -75,7 +75,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   @Produces(APPLICATION_JSON)
   fun withdraw(@RestPath("stateId") stateId: UUID, request: WithdrawMoneyRequest): Uni<JsonArray> {
     val command = WithdrawMoney(request.amount)
-    log.info("command $command")
+    log.debug("command $command")
     val metadata = CommandMetadata.new(stateId)
     val future = controller.handle(metadata, command).map { it.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())

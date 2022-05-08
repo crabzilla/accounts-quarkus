@@ -6,7 +6,7 @@ import io.github.crabzilla.CrabzillaContext
 import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.command.FeatureOptions
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
-import io.github.crabzilla.projection.ProjectorConfig
+import io.github.crabzilla.subscription.SubscriptionConfig
 import io.vertx.core.AbstractVerticle
 import javax.enterprise.context.ApplicationScoped
 
@@ -26,8 +26,8 @@ class AccountsFactory {
 
   @ApplicationScoped
   fun create(context: CrabzillaContext): AbstractVerticle {
-    val config = ProjectorConfig(projectionName, stateTypes = listOf("Account"))
-    return context.postgresProjector(config, AccountsView1Projector())
+    val config = SubscriptionConfig(projectionName, stateTypes = listOf("Account"))
+    return context.subscriptionWithPostgresSink(config, AccountsView1Projector()).first
   }
 
 }

@@ -2,7 +2,7 @@ CREATE DATABASE accounts OWNER user1;
 
 \connect accounts ;
 
-CREATE TABLE projections (
+CREATE TABLE subscriptions (
    name TEXT PRIMARY KEY NOT NULL,
    sequence BIGINT
 );
@@ -46,8 +46,8 @@ CREATE TABLE events_2 PARTITION OF events
 
 -- app data
 
-INSERT INTO projections (name, sequence) values ('accounts-view', 0);
-INSERT INTO projections (name, sequence) values ('transfers-view', 0);
+INSERT INTO subscriptions (name, sequence) values ('accounts-view', 0);
+INSERT INTO subscriptions (name, sequence) values ('transfers-view', 0);
 
 -- read model
 
