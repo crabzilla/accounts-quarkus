@@ -41,6 +41,11 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
+      <groupId>io.github.crabzilla.crabzilla</groupId>
+      <artifactId>crabzilla-json-jackson</artifactId>
+      <version>${crabzilla.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-kotlin</artifactId>
     </dependency>
@@ -82,11 +87,6 @@
       <groupId>io.rest-assured</groupId>
       <artifactId>kotlin-extensions</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.github.crabzilla</groupId>
-      <artifactId>crabzilla-json-jackson</artifactId>
-      <version>${crabzilla.version}</version>
     </dependency>
     <dependency>
       <groupId>io.kotest</groupId>
