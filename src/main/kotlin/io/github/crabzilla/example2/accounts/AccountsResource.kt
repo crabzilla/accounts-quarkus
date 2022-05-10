@@ -1,13 +1,13 @@
 package io.github.crabzilla.example2.accounts
 
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
 import io.github.crabzilla.example2.accounts.AccountCommand.OpenAccount
 import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
+import io.github.crabzilla.stack.EventRecord.Companion.toJsonArray
+import io.github.crabzilla.stack.command.FeatureService
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
@@ -28,7 +28,7 @@ import javax.ws.rs.core.MediaType.APPLICATION_JSON
 
 @Path("/accounts")
 internal class AccountsResource(private val pgPool: PgPool,
-                                private val controller: FeatureController<Account, AccountCommand, AccountEvent>
+                                private val controller: FeatureService<Account, AccountCommand, AccountEvent>
 ) {
 
   companion object {
@@ -51,8 +51,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun open(@RestPath("stateId") stateId: UUID, request: OpenAccountRequest): Uni<JsonArray> {
     val command = OpenAccount(stateId, request.cpf, request.name)
     log.debug("command $command")
-    val metadata = CommandMetadata.new(stateId)
-    val future = controller.handle(metadata, command).map { it.toJsonArray() }
+    val future = controller.handle(stateId, command).map { events -> events.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
@@ -64,8 +63,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun deposit(@RestPath("stateId") stateId: UUID, request: DepositMoneyRequest): Uni<JsonArray> {
     val command = DepositMoney(request.amount)
     log.debug("command $stateId - $command")
-    val metadata = CommandMetadata.new(stateId)
-    val future = controller.handle(metadata, command).map { it.toJsonArray() }
+    val future = controller.handle(stateId, command).map { events -> events.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
@@ -76,8 +74,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun withdraw(@RestPath("stateId") stateId: UUID, request: WithdrawMoneyRequest): Uni<JsonArray> {
     val command = WithdrawMoney(request.amount)
     log.debug("command $command")
-    val metadata = CommandMetadata.new(stateId)
-    val future = controller.handle(metadata, command).map { it.toJsonArray() }
+    val future = controller.handle(stateId, command).map { events -> events.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 

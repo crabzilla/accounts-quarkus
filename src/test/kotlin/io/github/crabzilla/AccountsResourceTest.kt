@@ -4,7 +4,7 @@ import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
-import io.github.crabzilla.subscription.SubscriptionApi
+import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import java.util.UUID
-import javax.annotation.PostConstruct
 import javax.inject.Inject
 
 @QuarkusTest

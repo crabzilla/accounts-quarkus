@@ -3,9 +3,9 @@ package io.github.crabzilla
 import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
-import io.github.crabzilla.example2.transfers.PendingTransfersVerticle
+import io.github.crabzilla.example2.transfers.PendingTransfersVerticle.Companion.HANDLE_ENDPOINT
 import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
-import io.github.crabzilla.subscription.SubscriptionApi
+import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
@@ -119,15 +119,21 @@ internal class TransfersResourceTest {
     val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
     assertEquals(1L, record1.getLong("version"))
     assertEquals("TransferRequested", record1.getJsonObject("eventPayload").getString("type"))
+
+    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
+    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
+      .await().indefinitely()
+
   }
 
   @Test
   @Order(6)
   fun `checking accounts and transfers view`() {
+
     val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
-    vertx.eventBus().request<Any>(PendingTransfersVerticle.HANDLE_ENDPOINT, null)
-      .flatMap { Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())}
-      .await().indefinitely()
+      vertx.eventBus().request<Nothing>(HANDLE_ENDPOINT,null)
+        .flatMap { Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage()) }
+        .await().indefinitely()
 
     val response = RestAssured.given()
       .contentType(ContentType.JSON)
@@ -160,6 +166,7 @@ internal class TransfersResourceTest {
     assertEquals(false, record3.getBoolean("pending"))
     assertEquals(true, record3.getBoolean("succeeded"))
     assertEquals(null, record3.getString("error_message"))
+
   }
 
   companion object {

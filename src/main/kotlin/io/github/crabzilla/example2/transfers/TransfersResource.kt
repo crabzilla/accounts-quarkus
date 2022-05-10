@@ -1,9 +1,9 @@
 package io.github.crabzilla.example2.transfers
 
-import io.github.crabzilla.command.CommandMetadata
-import io.github.crabzilla.command.FeatureController
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
+import io.github.crabzilla.stack.EventRecord.Companion.toJsonArray
+import io.github.crabzilla.stack.command.FeatureService
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
@@ -23,7 +23,7 @@ import javax.ws.rs.core.MediaType
 
 @Path("/transfers")
 class TransfersResource(private val pgPool: PgPool,
-                        private val controller: FeatureController<Transfer, TransferCommand, TransferEvent>) {
+                        private val controller: FeatureService<Transfer, TransferCommand, TransferEvent>) {
 
   companion object {
     private val log: Logger = LoggerFactory.getLogger(TransfersResource::class.java)
@@ -45,8 +45,7 @@ class TransfersResource(private val pgPool: PgPool,
   fun open(@RestPath("stateId") stateId: UUID, request: RequestTransferRequest): Uni<JsonArray> {
     val command = RequestTransfer(stateId, request.amount, request.fromAccountId, request.toAccountId)
     log.info("command $command")
-    val metadata = CommandMetadata.new(stateId)
-    val future = controller.handle(metadata, command).map { it.toJsonArray() }
+    val future = controller.handle(stateId, command).map { it.toJsonArray() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 

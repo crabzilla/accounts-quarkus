@@ -1,9 +1,10 @@
 package io.github.crabzilla.example2
 
-import io.github.crabzilla.CrabzillaContext
+import io.github.crabzilla.stack.CrabzillaContext
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import io.vertx.pgclient.pubsub.PgSubscriber
 import javax.enterprise.context.ApplicationScoped
 
 class CrabzillaContextFactory {
@@ -18,6 +19,11 @@ class CrabzillaContextFactory {
     }
     val pgConfig: JsonObject = toPgConfig(quarkusPgConfig)
     return CrabzillaContext.new(vertx, pgPool, pgConfig)
+  }
+
+  @ApplicationScoped
+  fun pgSubscriber(context: CrabzillaContext) : PgSubscriber {
+    return context.pgSubscriber()
   }
 
 }

@@ -1,13 +1,12 @@
 package io.github.crabzilla.example2.accounts
 
-import io.github.crabzilla.EventProjector
-import io.github.crabzilla.EventRecord
+import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import java.util.UUID
-import javax.enterprise.context.ApplicationScoped
 
 class AccountsView1Projector : EventProjector {
 

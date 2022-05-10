@@ -1,16 +1,18 @@
 package io.github.crabzilla.example2.transfers
 
 
+import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.example2.transfers.TransferService.Companion.PendingTransfer
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.pgclient.PgPool
+import io.vertx.pgclient.pubsub.PgSubscriber
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
-class PendingTransfersVerticle(private val pgPool: PgPool,
+class PendingTransfersVerticle(private val pgPool: PgPool, private val subscriber: PgSubscriber,
                                private val service: TransferService) : AbstractVerticle() {
 
   companion object {
@@ -28,6 +30,16 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
 //    val pgSubscriber = PgSubscriber.subscriber(vertx, PgConnectOptionsFactory.from(PgConfigFactory.toPgConfig(config)))
 
     log.info("Starting with interval (ms) = {}", config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
+
+    subscriber.connect()
+      .onSuccess {
+        subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
+          .handler { stateType ->
+            if (stateType.equals("Transfer")) pullAndProcess(service)
+          }
+      }.onFailure {
+        log.info("Failed to connect on subscriber")
+      }
 
     vertx.eventBus().consumer<String>(HANDLE_ENDPOINT) { msg ->
       log.info("Received a request to pull and process")
@@ -80,9 +92,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
             row.getUUID("id"),
             row.getDouble("amount"),
             row.getUUID("from_acct_id"),
-            row.getUUID("to_acct_id"),
-            row.getUUID("causation_id"),
-            row.getUUID("correlation_id")
+            row.getUUID("to_acct_id")
           )
         }.toList()
       }

@@ -1,7 +1,7 @@
 package io.github.crabzilla.example2.transfers
 
-import io.github.crabzilla.EventProjector
-import io.github.crabzilla.EventRecord
+import io.github.crabzilla.stack.EventProjector
+import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
@@ -23,15 +23,13 @@ class TransferProjector : EventProjector {
       val tuple = Tuple.of(id,
         payload.getDouble("amount"),
         UUID.fromString(payload.getString("fromAccountId")),
-        UUID.fromString(payload.getString("toAccountId")),
-        metadata.eventId,
-        metadata.correlationId
+        UUID.fromString(payload.getString("toAccountId"))
       )
       log.info("Will project new transfers {}", tuple.deepToString())
       return conn
         .preparedQuery("insert into " +
-                "transfers_view (id, amount, from_acct_id, to_acct_id, causation_id, correlation_id) " +
-                "values ($1, $2, $3, $4, $5, $6)")
+                "transfers_view (id, amount, from_acct_id, to_acct_id) " +
+                "values ($1, $2, $3, $4)")
         .execute(tuple)
         .mapEmpty()
     }
@@ -39,14 +37,12 @@ class TransferProjector : EventProjector {
       val (payload, metadata, id) = record.extract()
       val tuple = Tuple.of(id,
         payload.getBoolean("succeeded"),
-        payload.getString("errorMessage"),
-        metadata.eventId,
-        metadata.correlationId
+        payload.getString("errorMessage")
       )
       log.info("Will project transfers result {}", tuple.deepToString())
       return conn
         .preparedQuery("update transfers_view " +
-                "set pending = false, succeeded = $2, error_message = $3, causation_id = $4, correlation_id = $5 " +
+                "set pending = false, succeeded = $2, error_message = $3" +
                 "where id = $1")
         .execute(tuple)
         .mapEmpty()
