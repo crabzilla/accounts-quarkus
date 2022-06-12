@@ -3,11 +3,10 @@ package io.github.crabzilla.example2.transfers
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
 import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.command.FeatureOptions
-import io.github.crabzilla.stack.command.FeatureService
+import io.github.crabzilla.stack.command.CommandServiceApi
+import io.github.crabzilla.stack.command.CommandServiceApiFactory
+import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.vertx.core.AbstractVerticle
-import io.vertx.pgclient.PgPool
-import io.vertx.pgclient.pubsub.PgSubscriber
 import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 
@@ -18,16 +17,16 @@ class TransfersFactory {
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext, json: ObjectMapper, projector: TransferProjector)
-          : FeatureService<Transfer, TransferCommand, TransferEvent> {
+  fun create(factory: CommandServiceApiFactory, json: ObjectMapper, projector: TransferProjector)
+          : CommandServiceApi<TransferCommand> {
     val jsonSerDer = JacksonJsonObjectSerDer(json, transferComponent)
-    val options = FeatureOptions(eventProjector = projector)
-    return context.featureService(transferComponent, jsonSerDer, options)
+    val options = CommandServiceOptions(eventProjector = projector)
+    return factory.commandService(transferComponent, jsonSerDer, options)
   }
 
   @ApplicationScoped
-  fun create(pgPool: PgPool, subscriber: PgSubscriber, service: TransferService): AbstractVerticle {
-    return PendingTransfersVerticle(pgPool, subscriber, service)
+  fun create(context: CrabzillaContext, service: TransferService): AbstractVerticle {
+    return PendingTransfersVerticle(context.pgPool(), context.pgSubscriber(), service)
   }
 
 }

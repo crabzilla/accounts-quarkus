@@ -1,10 +1,14 @@
 package io.github.crabzilla.example2
 
 import io.github.crabzilla.stack.CrabzillaContext
+import io.github.crabzilla.stack.DefaultVertxContextFactory
+import io.github.crabzilla.stack.command.CommandServiceApiFactory
+import io.github.crabzilla.stack.command.DefaultCommandServiceApiFactory
+import io.github.crabzilla.stack.subscription.DefaultSubscriptionApiFactory
+import io.github.crabzilla.stack.subscription.SubscriptionApiFactory
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
-import io.vertx.pgclient.pubsub.PgSubscriber
 import javax.enterprise.context.ApplicationScoped
 
 class CrabzillaContextFactory {
@@ -18,12 +22,17 @@ class CrabzillaContextFactory {
         .put("password", quarkusPgConfig.password())
     }
     val pgConfig: JsonObject = toPgConfig(quarkusPgConfig)
-    return CrabzillaContext.new(vertx, pgPool, pgConfig)
+    return DefaultVertxContextFactory().new(vertx, pgConfig, pgPool)
   }
 
   @ApplicationScoped
-  fun pgSubscriber(context: CrabzillaContext) : PgSubscriber {
-    return context.pgSubscriber()
+  fun commandServiceFactory(context: CrabzillaContext) : CommandServiceApiFactory {
+    return DefaultCommandServiceApiFactory(context)
+  }
+
+  @ApplicationScoped
+  fun subscriptionFactory(context: CrabzillaContext) : SubscriptionApiFactory {
+    return DefaultSubscriptionApiFactory(context)
   }
 
 }

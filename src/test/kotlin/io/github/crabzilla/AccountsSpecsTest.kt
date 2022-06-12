@@ -1,22 +1,17 @@
 package io.github.crabzilla
 
 import io.github.crabzilla.core.FeatureSpecification
-import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
-import io.github.crabzilla.example2.accounts.AccountEvent.AccountOpened
-import io.github.crabzilla.example2.accounts.AccountEvent.MoneyDeposited
-import io.github.crabzilla.example2.accounts.AccountEvent.MoneyWithdrawn
 import io.github.crabzilla.example2.accounts.Account
 import io.github.crabzilla.example2.accounts.AccountBalanceNotEnough
-import io.github.crabzilla.example2.accounts.AccountCommand
-import io.github.crabzilla.example2.accounts.AccountCommand.OpenAccount
-import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
+import io.github.crabzilla.example2.accounts.AccountCommand.*
+import io.github.crabzilla.example2.accounts.AccountEvent.*
 import io.github.crabzilla.example2.accounts.DepositExceeded
 import io.github.crabzilla.example2.accounts.accountComponent
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
 import io.quarkus.test.junit.QuarkusTest
-import java.util.UUID
+import java.util.*
 
 @QuarkusTest
 class AccountsSpecsTest : AnnotationSpec() {

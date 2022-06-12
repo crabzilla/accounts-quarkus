@@ -2,18 +2,11 @@ CREATE DATABASE accounts OWNER user1;
 
 \connect accounts ;
 
-CREATE TABLE commands (
-  state_id UUID NOT NULL,
-  causation_id UUID NOT NULL,
-  cmd_payload JSON NOT NULL
-);
-
--- TODO indices
-
 CREATE TABLE events (
       sequence BIGSERIAL NOT NULL PRIMARY KEY,
       event_type TEXT NOT NULL,
       event_payload JSON NOT NULL,
+      is_private BOOLEAN, -- TODO lgpd, grpd
       state_type text NOT NULL,
       state_id UUID NOT NULL,
       version INTEGER NOT NULL,
@@ -33,6 +26,14 @@ CREATE INDEX event_type ON events (event_type);
 CREATE TABLE subscriptions (
    name TEXT PRIMARY KEY NOT NULL,
    sequence BIGINT
+);
+
+CREATE TABLE commands (
+  state_id UUID NOT NULL,
+  causation_id UUID NOT NULL,
+  last_causation_id UUID NOT NULL,
+  cmd_payload JSON NOT NULL,
+  private_payload JSON -- TODO LGPD, GPDR
 );
 
 -- app data

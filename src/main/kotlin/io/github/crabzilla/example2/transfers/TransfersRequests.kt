@@ -1,6 +1,6 @@
 package io.github.crabzilla.example2.transfers
 
-import java.util.UUID
+import java.util.*
 
 object TransfersRequests {
   class RequestTransferRequest(val amount: Double = 0.00,

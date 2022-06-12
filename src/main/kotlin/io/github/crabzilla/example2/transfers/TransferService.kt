@@ -1,23 +1,21 @@
 package io.github.crabzilla.example2.transfers
 
-import io.github.crabzilla.example2.accounts.Account
 import io.github.crabzilla.example2.accounts.AccountCommand
 import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
 import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
-import io.github.crabzilla.example2.accounts.AccountEvent
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
-import io.github.crabzilla.stack.command.FeatureService
+import io.github.crabzilla.stack.command.CommandServiceApi
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
 @ApplicationScoped
 class TransferService(
-  private val acctController: FeatureService<Account, AccountCommand, AccountEvent>,
-  private val transferController: FeatureService<Transfer, TransferCommand, TransferEvent>,
+  private val acctController: CommandServiceApi<AccountCommand>,
+  private val transferController: CommandServiceApi<TransferCommand>,
 ) {
 
   companion object {

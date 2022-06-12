@@ -1,17 +1,13 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
-import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
-import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.mutiny.core.Vertx
 import io.vertx.mutiny.pgclient.PgPool
 import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,15 +15,13 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import java.util.UUID
+import java.util.*
 import javax.inject.Inject
+
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsResourceTest() {
-
-  @Inject
-  lateinit var vertx: Vertx
 
   @Inject
   lateinit var pgPool: PgPool
@@ -59,27 +53,21 @@ class AccountsResourceTest() {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().print())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(1L, record1.getLong("version"))
-    assertEquals("AccountOpened", record1.getJsonObject("eventPayload").getString("type"))
+    val resp = JsonObject(response.body().asString())
+    assertEquals(1, resp.getLong("version"))
   }
 
   @Test
   @Order(3)
   @Throws(InterruptedException::class)
   fun gotAccounts() {
-    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
-    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
-      .await().indefinitely()
     val response = RestAssured.given()
       .contentType(ContentType.JSON)
       .`when`()["/accounts/view1"]
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().print())
+    val resp = JsonArray(response.body().asString())
     assertEquals(1, resp.size())
     val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
     assertEquals(id, UUID.fromString(record1.getString("id")))
@@ -97,11 +85,8 @@ class AccountsResourceTest() {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().print())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(2L, record1.getLong("version"))
-    assertEquals("MoneyDeposited", record1.getJsonObject("eventPayload").getString("type"))
+    val resp = JsonObject(response.body().asString())
+    assertEquals(2, resp.getLong("version"))
   }
 
   @Test
@@ -115,26 +100,22 @@ class AccountsResourceTest() {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().print())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(3L, record1.getLong("version"))
-    assertEquals("MoneyWithdrawn", record1.getJsonObject("eventPayload").getString("type"))
+    val resp = JsonObject(response.body().asString())
+    assertEquals(3, resp.getLong("version"))
   }
 
   @Test
   @Order(6)
   @Throws(InterruptedException::class)
   fun gotAccountWith400() {
-    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
-    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
+    Thread.sleep(1100)
     val response = RestAssured.given()
       .contentType(ContentType.JSON)
       .`when`()["/accounts/view1"]
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().print())
+    val resp = JsonArray(response.body().asString())
     assertEquals(1, resp.size())
     val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
     assertEquals(id, UUID.fromString(record1.getString("id")))

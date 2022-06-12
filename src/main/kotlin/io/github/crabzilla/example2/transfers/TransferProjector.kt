@@ -6,7 +6,7 @@ import io.vertx.core.Future
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
 @ApplicationScoped

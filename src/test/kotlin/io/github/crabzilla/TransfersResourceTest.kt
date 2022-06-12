@@ -1,15 +1,12 @@
+
 package io.github.crabzilla
 
-import io.github.crabzilla.example2.accounts.AccountsFactory
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
-import io.github.crabzilla.example2.transfers.PendingTransfersVerticle.Companion.HANDLE_ENDPOINT
 import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
-import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured
 import io.restassured.http.ContentType
-import io.smallrye.mutiny.Uni
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.Vertx
@@ -20,7 +17,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import java.util.UUID
+import java.util.*
 import javax.inject.Inject
 
 @QuarkusTest
@@ -60,12 +57,8 @@ internal class TransfersResourceTest {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().prettyPrint())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(1L, record1.getLong("version"))
-    assertEquals("AccountOpened", record1.getJsonObject("eventPayload").getString("type"))
-  }
+      val resp = JsonObject(response.body().asString())
+      assertEquals(1, resp.getLong("version"))  }
 
   @Test
   @Order(3)
@@ -78,11 +71,8 @@ internal class TransfersResourceTest {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().prettyPrint())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(1L, record1.getLong("version"))
-    assertEquals("AccountOpened", record1.getJsonObject("eventPayload").getString("type"))
+      val resp = JsonObject(response.body().asString())
+      assertEquals(1, resp.getLong("version"))
   }
 
   @Test
@@ -96,12 +86,8 @@ internal class TransfersResourceTest {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().prettyPrint())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(2L, record1.getLong("version"))
-    assertEquals("MoneyDeposited", record1.getJsonObject("eventPayload").getString("type"))
-  }
+      val resp = JsonObject(response.body().asString())
+      assertEquals(2, resp.getLong("version"))  }
 
   @Test
   @Order(5)
@@ -114,26 +100,14 @@ internal class TransfersResourceTest {
       .then()
       .statusCode(200)
       .extract().response()
-    val resp = JsonArray(response.body().prettyPrint())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(1L, record1.getLong("version"))
-    assertEquals("TransferRequested", record1.getJsonObject("eventPayload").getString("type"))
-
-    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
-    Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage())
-      .await().indefinitely()
-
-  }
+      val resp = JsonObject(response.body().asString())
+      assertEquals(1, resp.getLong("version"))  }
 
   @Test
   @Order(6)
   fun `checking accounts and transfers view`() {
 
-    val subscriptionApi = SubscriptionApi(vertx.eventBus().delegate, AccountsFactory.projectionName)
-      vertx.eventBus().request<Nothing>(HANDLE_ENDPOINT,null)
-        .flatMap { Uni.createFrom().completionStage(subscriptionApi.handle().toCompletionStage()) }
-        .await().indefinitely()
+    Thread.sleep(1000)
 
     val response = RestAssured.given()
       .contentType(ContentType.JSON)

@@ -1,8 +1,8 @@
 package io.github.crabzilla.example2.transfers
 
 
-import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.example2.transfers.TransferService.Companion.PendingTransfer
+import io.github.crabzilla.stack.CrabzillaContext
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.pgclient.PgPool
@@ -18,7 +18,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool, private val subscribe
   companion object {
     private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
     private val node = ManagementFactory.getRuntimeMXBean().name
-    private const val DEFAULT_INTERVAL = 30_000L
+    private const val DEFAULT_INTERVAL = 1_000L
     const val HANDLE_ENDPOINT = "PendingTransfersVerticle.handle"
   }
 

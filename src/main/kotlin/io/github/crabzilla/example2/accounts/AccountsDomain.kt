@@ -7,13 +7,9 @@ import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
-import io.github.crabzilla.example2.accounts.AccountCommand.DepositMoney
-import io.github.crabzilla.example2.accounts.AccountCommand.OpenAccount
-import io.github.crabzilla.example2.accounts.AccountCommand.WithdrawMoney
-import io.github.crabzilla.example2.accounts.AccountEvent.AccountOpened
-import io.github.crabzilla.example2.accounts.AccountEvent.MoneyDeposited
-import io.github.crabzilla.example2.accounts.AccountEvent.MoneyWithdrawn
-import java.util.UUID
+import io.github.crabzilla.example2.accounts.AccountCommand.*
+import io.github.crabzilla.example2.accounts.AccountEvent.*
+import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
@@ -80,7 +76,7 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
     }
   }
 
-  override fun handleCommand(command: AccountCommand, state: Account?): FeatureSession<Account, AccountEvent> {
+  override fun handle(command: AccountCommand, state: Account?): FeatureSession<Account, AccountEvent> {
     return when (command) {
       is OpenAccount -> {
         if (state != null) throw AccountAlreadyExists(command.id)

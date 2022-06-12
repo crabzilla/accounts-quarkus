@@ -1,17 +1,16 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
-import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
 import io.github.crabzilla.core.FeatureSpecification
 import io.github.crabzilla.example2.transfers.Transfer
-import io.github.crabzilla.example2.transfers.TransferCommand
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
+import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
+import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
 import io.github.crabzilla.example2.transfers.transferComponent
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
 import io.quarkus.test.junit.QuarkusTest
-import java.util.UUID
+import java.util.*
 
 @QuarkusTest
 class TransfersSpecsTest : AnnotationSpec() {

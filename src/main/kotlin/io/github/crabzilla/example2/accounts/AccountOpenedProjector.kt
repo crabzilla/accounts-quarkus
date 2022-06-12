@@ -8,7 +8,7 @@ import io.vertx.core.Future
 import io.vertx.core.Future.succeededFuture
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
-import java.util.UUID
+import java.util.*
 
 class AccountOpenedProjector(private val json: ObjectMapper) : EventProjector {
 

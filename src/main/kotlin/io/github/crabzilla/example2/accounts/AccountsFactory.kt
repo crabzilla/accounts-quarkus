@@ -3,11 +3,14 @@ package io.github.crabzilla.example2.accounts
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
-import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.command.FeatureOptions
-import io.github.crabzilla.stack.command.FeatureService
+import io.github.crabzilla.stack.command.CommandServiceApi
+import io.github.crabzilla.stack.command.CommandServiceApiFactory
+import io.github.crabzilla.stack.command.CommandServiceOptions
+import io.github.crabzilla.stack.subscription.SubscriptionApi
+import io.github.crabzilla.stack.subscription.SubscriptionApiFactory
 import io.github.crabzilla.stack.subscription.SubscriptionConfig
-import io.vertx.core.AbstractVerticle
+import io.github.crabzilla.stack.subscription.SubscriptionSink
+import io.github.crabzilla.stack.subscription.SubscriptionSink.POSTGRES_PROJECTOR
 import javax.enterprise.context.ApplicationScoped
 
 class AccountsFactory {
@@ -17,17 +20,20 @@ class AccountsFactory {
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext, json: ObjectMapper)
-  : FeatureService<Account, AccountCommand, AccountEvent> {
+  fun create(factory: CommandServiceApiFactory, json: ObjectMapper)
+  : CommandServiceApi<AccountCommand> {
     val jsonSerDer = JacksonJsonObjectSerDer(json, accountComponent)
-    val options = FeatureOptions(eventProjector = AccountOpenedProjector(json))
-    return context.featureService(accountComponent, jsonSerDer, options)
+    val options = CommandServiceOptions(eventProjector = AccountOpenedProjector(json))
+    return factory.commandService(accountComponent, jsonSerDer, options)
   }
 
   @ApplicationScoped
-  fun create(context: CrabzillaContext): AbstractVerticle {
-    val config = SubscriptionConfig(projectionName, stateTypes = listOf("Account"))
-    return context.subscriptionWithPostgresSink(config, AccountsView1Projector()).first
+  fun create(factory: SubscriptionApiFactory): SubscriptionApi {
+    val config = SubscriptionConfig(projectionName,
+      initialInterval = 100, maxInterval = 1000,
+      stateTypes = listOf("Account"), sink = POSTGRES_PROJECTOR
+    )
+    return factory.subscription(config, AccountsView1Projector())
   }
 
 }

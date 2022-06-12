@@ -7,12 +7,11 @@ import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.EventHandler
 import io.github.crabzilla.core.FeatureComponent
 import io.github.crabzilla.core.FeatureSession
-import io.github.crabzilla.example2.accounts.AccountEvent
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
-import java.util.UUID
+import java.util.*
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -79,7 +78,7 @@ class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, Transfe
       return listOf(TransferRequested(id, amount, fromAccountId, toAccountId))
     }
   }
-  override fun handleCommand(command: TransferCommand, state: Transfer?): FeatureSession<Transfer, TransferEvent> {
+  override fun handle(command: TransferCommand, state: Transfer?): FeatureSession<Transfer, TransferEvent> {
     return when (command) {
       is RequestTransfer -> {
         if (state != null) throw TransferAlreadyExists(command.id)
