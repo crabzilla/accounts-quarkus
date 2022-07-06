@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.crabzilla</groupId>
   <artifactId>accounts-quarkus</artifactId>
-  <version>v0.5.5</version>
+  <version>v0.5.6</version>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <kotlin.version>1.6.21</kotlin.version>
@@ -14,19 +14,19 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>2.8.2.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.9.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <maven.jacoco.plugin.version>0.8.7</maven.jacoco.plugin.version>
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>
   </properties>
-  <repositories>
-    <repository>
-      <id>jitpack.io</id>
-      <url>https://jitpack.io</url>
-    </repository>
-  </repositories>
+<!--  <repositories>-->
+<!--    <repository>-->
+<!--      <id>jitpack.io</id>-->
+<!--      <url>https://jitpack.io</url>-->
+<!--    </repository>-->
+<!--  </repositories>-->
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -40,9 +40,9 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>io.github.crabzilla.crabzilla</groupId>
+      <groupId>io.github.crabzilla</groupId>
       <artifactId>crabzilla-json-jackson</artifactId>
-      <version>${project.version}</version>
+      <version>v0.5.6</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

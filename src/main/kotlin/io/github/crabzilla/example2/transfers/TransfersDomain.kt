@@ -3,14 +3,12 @@ package io.github.crabzilla.example2.transfers
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.FeatureComponent
-import io.github.crabzilla.core.FeatureSession
+import io.github.crabzilla.core.*
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
+import io.github.crabzilla.stack.command.CommandServiceConfig
 import java.util.*
 
 
@@ -78,7 +76,7 @@ class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, Transfe
       return listOf(TransferRequested(id, amount, fromAccountId, toAccountId))
     }
   }
-  override fun handle(command: TransferCommand, state: Transfer?): FeatureSession<Transfer, TransferEvent> {
+  override fun handle(command: TransferCommand, state: Transfer?): CommandSession<Transfer, TransferEvent> {
     return when (command) {
       is RequestTransfer -> {
         if (state != null) throw TransferAlreadyExists(command.id)
@@ -94,10 +92,10 @@ class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, Transfe
   }
 }
 
-val transferComponent = FeatureComponent(
+val transferComponent = CommandServiceConfig(
   Transfer::class,
   TransferCommand::class,
   TransferEvent::class,
   transferEventHandler,
-  { TransferCommandHandler() }
+  TransferCommandHandler()
 )

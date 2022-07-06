@@ -1,12 +1,14 @@
 package io.github.crabzilla
 
-import io.github.crabzilla.core.FeatureSpecification
+import io.github.crabzilla.core.CommandTestSpecification
 import io.github.crabzilla.example2.transfers.Transfer
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
+import io.github.crabzilla.example2.transfers.TransferCommandHandler
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
 import io.github.crabzilla.example2.transfers.transferComponent
+import io.github.crabzilla.example2.transfers.transferEventHandler
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
 import io.quarkus.test.junit.QuarkusTest
@@ -23,7 +25,7 @@ class TransfersSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when requesting a transfer of 100`() {
-    FeatureSpecification(transferComponent)
+    CommandTestSpecification(TransferCommandHandler(), transferEventHandler)
       .whenCommand(RequestTransfer(id, 100.00, fromAcctId, toAcctId))
       .then { it.state() shouldBe Transfer(id, 100.00, fromAcctId, toAcctId, null, null) }
       .then { it.events() shouldBe listOf(TransferRequested(id, 100.00, fromAcctId, toAcctId)) }
@@ -31,7 +33,7 @@ class TransfersSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when registering a successful transfer`() {
-    FeatureSpecification(transferComponent)
+    CommandTestSpecification(TransferCommandHandler(), transferEventHandler)
       .whenCommand(RequestTransfer(id, 100.00, fromAcctId, toAcctId))
       .whenCommand(RegisterResult(true, null))
       .then { it.state() shouldBe Transfer(id, 100.00, fromAcctId, toAcctId, true, null) }
@@ -43,7 +45,7 @@ class TransfersSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when registering a failed transfer`() {
-    FeatureSpecification(transferComponent)
+    CommandTestSpecification(TransferCommandHandler(), transferEventHandler)
       .whenCommand(RequestTransfer(id, 100.00, fromAcctId, toAcctId))
       .whenCommand(RegisterResult(false, "an error x"))
       .then { it.state() shouldBe Transfer(id, 100.00, fromAcctId, toAcctId, false,

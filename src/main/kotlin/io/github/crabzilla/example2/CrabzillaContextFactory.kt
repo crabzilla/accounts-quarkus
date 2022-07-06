@@ -1,7 +1,7 @@
 package io.github.crabzilla.example2
 
 import io.github.crabzilla.stack.CrabzillaContext
-import io.github.crabzilla.stack.DefaultVertxContextFactory
+import io.github.crabzilla.stack.DefaultCrabzillaContextFactory
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
 import io.github.crabzilla.stack.command.DefaultCommandServiceApiFactory
 import io.github.crabzilla.stack.subscription.DefaultSubscriptionApiFactory
@@ -22,7 +22,7 @@ class CrabzillaContextFactory {
         .put("password", quarkusPgConfig.password())
     }
     val pgConfig: JsonObject = toPgConfig(quarkusPgConfig)
-    return DefaultVertxContextFactory().new(vertx, pgConfig, pgPool)
+    return DefaultCrabzillaContextFactory().new(vertx, pgConfig, pgPool)
   }
 
   @ApplicationScoped

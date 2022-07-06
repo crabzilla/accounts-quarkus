@@ -3,12 +3,10 @@ package io.github.crabzilla.example2.accounts
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import io.github.crabzilla.core.CommandHandler
-import io.github.crabzilla.core.EventHandler
-import io.github.crabzilla.core.FeatureComponent
-import io.github.crabzilla.core.FeatureSession
+import io.github.crabzilla.core.*
 import io.github.crabzilla.example2.accounts.AccountCommand.*
 import io.github.crabzilla.example2.accounts.AccountEvent.*
+import io.github.crabzilla.stack.command.CommandServiceConfig
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -61,9 +59,6 @@ class DepositExceeded(amount: Double) : IllegalStateException("Cannot deposit mo
 class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEvent>(accountEventHandler) {
   companion object {
     private const val LIMIT = 2000.00
-    private fun open(id: UUID, cpf: String, name: String): List<AccountEvent> {
-      return listOf(AccountOpened(id = id, cpf, name))
-    }
     private fun Account.deposit(amount: Double): List<AccountEvent> {
       if (amount > LIMIT) {
         throw DepositExceeded(LIMIT)
@@ -76,11 +71,11 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
     }
   }
 
-  override fun handle(command: AccountCommand, state: Account?): FeatureSession<Account, AccountEvent> {
+  override fun handle(command: AccountCommand, state: Account?): CommandSession<Account, AccountEvent> {
     return when (command) {
       is OpenAccount -> {
         if (state != null) throw AccountAlreadyExists(command.id)
-        withNew(open(command.id, command.cpf, command.name))
+        withNew(listOf(AccountOpened(id = command.id, command.cpf, command.name)))
       }
       else -> {
         if (state == null) throw AccountNotFound()
@@ -94,10 +89,10 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
   }
 }
 
-val accountComponent = FeatureComponent(
+val accountComponent = CommandServiceConfig(
   Account::class,
   AccountCommand::class,
   AccountEvent::class,
   accountEventHandler,
-  { AccountCommandHandler() }
+  AccountCommandHandler()
 )

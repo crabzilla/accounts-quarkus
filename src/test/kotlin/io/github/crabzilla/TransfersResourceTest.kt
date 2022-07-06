@@ -136,6 +136,7 @@ internal class TransfersResourceTest {
     val resp2 = JsonArray(response2.body().prettyPrint())
 
     val record3 = JsonObject(resp2.list[0] as Map<String?, Any?>?)
+    val x: Map<String, Any> = record3.map
     assertEquals(transferId, UUID.fromString(record3.getString("id")))
     assertEquals(false, record3.getBoolean("pending"))
     assertEquals(true, record3.getBoolean("succeeded"))

@@ -42,7 +42,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun open(@RestPath("stateId") stateId: UUID, request: OpenAccountRequest): Uni<JsonObject> {
     val command = OpenAccount(stateId, request.cpf, request.name)
     log.debug("command $command")
-    val future = serviceApi.handle(stateId, command).map { events -> events.toJsonObject() }
+    val future = serviceApi.handle(stateId, command).map { event -> event.toJsonObject() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
@@ -54,7 +54,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun deposit(@RestPath("stateId") stateId: UUID, request: DepositMoneyRequest): Uni<JsonObject> {
     val command = DepositMoney(request.amount)
     log.debug("command $stateId - $command")
-    val future = serviceApi.handle(stateId, command).map { events -> events.toJsonObject() }
+    val future = serviceApi.handle(stateId, command).map { event -> event.toJsonObject() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
@@ -65,7 +65,7 @@ internal class AccountsResource(private val pgPool: PgPool,
   fun withdraw(@RestPath("stateId") stateId: UUID, request: WithdrawMoneyRequest): Uni<JsonObject> {
     val command = WithdrawMoney(request.amount)
     log.debug("command $command")
-    val future = serviceApi.handle(stateId, command).map { events -> events.toJsonObject() }
+    val future = serviceApi.handle(stateId, command).map { event -> event.toJsonObject() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 

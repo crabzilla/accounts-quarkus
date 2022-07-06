@@ -3,6 +3,7 @@ package io.github.crabzilla.example2.transfers
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
 import io.vertx.core.Future
+import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
@@ -18,8 +19,7 @@ class TransferProjector : EventProjector {
 
   // TODO propagate causation and correlation ids
   override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
-    fun request(id: UUID): Future<Void> {
-      val (payload, metadata, id) = record.extract()
+    fun request(id: UUID, payload: JsonObject): Future<Void> {
       val tuple = Tuple.of(id,
         payload.getDouble("amount"),
         UUID.fromString(payload.getString("fromAccountId")),
@@ -33,8 +33,7 @@ class TransferProjector : EventProjector {
         .execute(tuple)
         .mapEmpty()
     }
-    fun register(id: UUID): Future<Void> {
-      val (payload, metadata, id) = record.extract()
+    fun register(id: UUID, payload: JsonObject): Future<Void> {
       val tuple = Tuple.of(id,
         payload.getBoolean("succeeded"),
         payload.getString("errorMessage")
@@ -48,10 +47,10 @@ class TransferProjector : EventProjector {
         .mapEmpty()
     }
 
-    val (payload, _, id) = record.extract()
+    val (payload, metadata, id) = record.extract()
     return when (val eventName = payload.getString("type")) {
-      "TransferRequested" -> request(id)
-      "TransferConcluded" -> register(id)
+      "TransferRequested" -> request(id, payload)
+      "TransferConcluded" -> register(id, payload)
       else -> Future.failedFuture("Unknown event $eventName")
     }
   }
