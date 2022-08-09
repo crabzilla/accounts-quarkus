@@ -52,7 +52,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
     }
     return getPendingTransfers()
       .compose { pendingList ->
-        log.debug("Found ${pendingList.size} pending transfers")
+        log.info("Found ${pendingList.size} pending transfers")
         val initialFuture = Future.succeededFuture<Void>()
         pendingList.fold(
           initialFuture
