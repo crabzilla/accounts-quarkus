@@ -21,12 +21,12 @@
     <sonar.jacoco.reportPath>${project.build.directory}/coverage-reports/jacoco.exec</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${project.build.directory}/coverage-reports/jacoco-it.exec</sonar.jacoco.itReportPath>
   </properties>
-<!--  <repositories>-->
-<!--    <repository>-->
-<!--      <id>jitpack.io</id>-->
-<!--      <url>https://jitpack.io</url>-->
-<!--    </repository>-->
-<!--  </repositories>-->
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
   <dependencyManagement>
     <dependencies>
       <dependency>
