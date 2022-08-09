@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.accounts
 
 import io.github.crabzilla.core.CommandTestSpecification
 import io.github.crabzilla.example2.accounts.*

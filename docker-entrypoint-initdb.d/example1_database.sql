@@ -33,7 +33,8 @@ CREATE TABLE commands (
   causation_id UUID NOT NULL,
   last_causation_id UUID NOT NULL,
   cmd_payload JSON NOT NULL,
-  private_payload JSON -- TODO LGPD, GPDR
+  private_payload JSON, -- TODO LGPD, GPDR
+  inserted_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- app data

@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.transfers
 
 import io.github.crabzilla.core.CommandTestSpecification
 import io.github.crabzilla.example2.transfers.Transfer
@@ -7,7 +7,6 @@ import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
 import io.github.crabzilla.example2.transfers.TransferCommandHandler
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
 import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
-import io.github.crabzilla.example2.transfers.transferComponent
 import io.github.crabzilla.example2.transfers.transferEventHandler
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
@@ -48,7 +47,8 @@ class TransfersSpecsTest : AnnotationSpec() {
     CommandTestSpecification(TransferCommandHandler(), transferEventHandler)
       .whenCommand(RequestTransfer(id, 100.00, fromAcctId, toAcctId))
       .whenCommand(RegisterResult(false, "an error x"))
-      .then { it.state() shouldBe Transfer(id, 100.00, fromAcctId, toAcctId, false,
+      .then { it.state() shouldBe Transfer(
+          id, 100.00, fromAcctId, toAcctId, false,
         "an error x") }
       .then { it.events() shouldBe listOf(
         TransferRequested(id, 100.00, fromAcctId, toAcctId),
