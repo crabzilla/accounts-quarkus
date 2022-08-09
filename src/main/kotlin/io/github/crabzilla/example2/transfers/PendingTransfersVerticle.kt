@@ -30,14 +30,14 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
       config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
 
     vertx.setPeriodic(config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)) {
-      pullAndProcess(service)
+      pullAndProcess()
     }
 
     subscriber.connect()
       .onSuccess {
         subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
           .handler { stateType ->
-            if (stateType.equals("Transfer")) pullAndProcess(service)
+            if (stateType.equals("Transfer")) pullAndProcess()
           }
       }.onFailure {
         log.info("Failed to connect on subscriber")
@@ -45,7 +45,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
 
   }
 
-  private fun pullAndProcess(service: TransferService): Future<Void> {
+  private fun pullAndProcess(): Future<Void> {
     if (isBusy) {
       log.info("Still busy.. wil try next time")
       return Future.succeededFuture()
