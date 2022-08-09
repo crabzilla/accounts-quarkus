@@ -1,4 +1,4 @@
-package io.github.crabzilla
+package io.github.crabzilla.accounts
 
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
@@ -9,6 +9,9 @@ import io.restassured.http.ContentType
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.pgclient.PgPool
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.MethodOrderer
@@ -52,8 +55,8 @@ class AccountsResourceTest() {
       .`when`().put("/accounts/$id")
       .then()
       .statusCode(200)
-      .extract().response()
-    val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+    val resp = JsonObject(response)
     assertEquals(1, resp.getLong("version"))
   }
 
@@ -66,10 +69,10 @@ class AccountsResourceTest() {
       .`when`()["/accounts/view1"]
       .then()
       .statusCode(200)
-      .extract().response()
-    val resp = JsonArray(response.body().asString())
+      .extract().response().asString()
+    val resp = JsonArray(response)
     assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
+    val record1 = resp.getJsonObject(0)
     assertEquals(id, UUID.fromString(record1.getString("id")))
     assertEquals(0L, record1.getLong("balance"))
   }
@@ -84,8 +87,8 @@ class AccountsResourceTest() {
       .`when`().post("/accounts/$id/deposit")
       .then()
       .statusCode(200)
-      .extract().response()
-    val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+    val resp = JsonObject(response)
     assertEquals(2, resp.getLong("version"))
   }
 
@@ -99,8 +102,8 @@ class AccountsResourceTest() {
       .`when`().post("/accounts/$id/withdraw")
       .then()
       .statusCode(200)
-      .extract().response()
-    val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+    val resp = JsonObject(response)
     assertEquals(3, resp.getLong("version"))
   }
 
@@ -108,18 +111,20 @@ class AccountsResourceTest() {
   @Order(6)
   @Throws(InterruptedException::class)
   fun gotAccountWith400() {
-    Thread.sleep(1100)
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .`when`()["/accounts/view1"]
-      .then()
-      .statusCode(200)
-      .extract().response()
-    val resp = JsonArray(response.body().asString())
-    assertEquals(1, resp.size())
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(id, UUID.fromString(record1.getString("id")))
-    assertEquals(400L, record1.getLong("balance"))
+    await().untilCallTo {
+      RestAssured.given()
+        .contentType(ContentType.JSON)
+        .`when`()["/accounts/view1"]
+        .then()
+        .statusCode(200)
+        .extract().response().asString()
+    } matches { responseAsString ->
+      val jsonArray = JsonArray(responseAsString)
+      val json = jsonArray.getJsonObject(0)
+      jsonArray.size() == 1 &&
+              UUID.fromString(json.getString("id")) == id &&
+              json.getLong("balance")== 400L
+    }
   }
 
   companion object {

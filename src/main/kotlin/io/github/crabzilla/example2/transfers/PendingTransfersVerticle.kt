@@ -12,54 +12,40 @@ import io.vertx.sqlclient.RowSet
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 
-class PendingTransfersVerticle(private val pgPool: PgPool, private val subscriber: PgSubscriber,
+class PendingTransfersVerticle(private val pgPool: PgPool,
+                               private val subscriber: PgSubscriber,
                                private val service: TransferService) : AbstractVerticle() {
 
   companion object {
     private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
     private val node = ManagementFactory.getRuntimeMXBean().name
-    private const val DEFAULT_INTERVAL = 1_000L
-    const val HANDLE_ENDPOINT = "PendingTransfersVerticle.handle"
+    private const val DEFAULT_INTERVAL = 30_000L
   }
 
   private var isBusy: Boolean = false
 
   override fun start() {
 
-    // TODO use a subscriber to be greedy
-//    val pgSubscriber = PgSubscriber.subscriber(vertx, PgConnectOptionsFactory.from(PgConfigFactory.toPgConfig(config)))
+    log.info("{} starting with interval (ms) = {}", node,
+      config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
 
-    log.info("Starting with interval (ms) = {}", config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
+    vertx.setPeriodic(config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)) {
+      pullAndProcess()
+    }
 
     subscriber.connect()
       .onSuccess {
         subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
           .handler { stateType ->
-            if (stateType.equals("Transfer")) pullAndProcess(service)
+            if (stateType.equals("Transfer")) pullAndProcess()
           }
       }.onFailure {
         log.info("Failed to connect on subscriber")
       }
 
-    vertx.eventBus().consumer<String>(HANDLE_ENDPOINT) { msg ->
-      log.info("Received a request to pull and process")
-      pullAndProcess(service)
-        .onComplete {
-          if (it.succeeded()) {
-            msg.reply(node)
-          } else {
-            msg.fail(500, it.cause().message)
-          }
-        }
-    }
-
-    vertx.setPeriodic(config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)) {
-      pullAndProcess(service)
-    }
-
   }
 
-  private fun pullAndProcess(service: TransferService): Future<Void> {
+  private fun pullAndProcess(): Future<Void> {
     if (isBusy) {
       log.info("Still busy.. wil try next time")
       return Future.succeededFuture()

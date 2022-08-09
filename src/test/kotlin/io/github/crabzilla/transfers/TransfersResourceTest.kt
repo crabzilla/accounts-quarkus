@@ -1,5 +1,5 @@
 
-package io.github.crabzilla
+package io.github.crabzilla.transfers
 
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
@@ -11,6 +11,9 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.core.Vertx
 import io.vertx.mutiny.pgclient.PgPool
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.MethodOrderer
@@ -56,8 +59,8 @@ internal class TransfersResourceTest {
       .`when`().put("/accounts/$account1Id")
       .then()
       .statusCode(200)
-      .extract().response()
-      val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+      val resp = JsonObject(response)
       assertEquals(1, resp.getLong("version"))  }
 
   @Test
@@ -70,8 +73,8 @@ internal class TransfersResourceTest {
       .`when`().put("/accounts/$account2Id")
       .then()
       .statusCode(200)
-      .extract().response()
-      val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+      val resp = JsonObject(response)
       assertEquals(1, resp.getLong("version"))
   }
 
@@ -85,8 +88,8 @@ internal class TransfersResourceTest {
       .`when`().post("/accounts/$account1Id/deposit")
       .then()
       .statusCode(200)
-      .extract().response()
-      val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+      val resp = JsonObject(response)
       assertEquals(2, resp.getLong("version"))  }
 
   @Test
@@ -99,47 +102,46 @@ internal class TransfersResourceTest {
       .`when`().put("/transfers/$transferId")
       .then()
       .statusCode(200)
-      .extract().response()
-      val resp = JsonObject(response.body().asString())
+      .extract().response().asString()
+      val resp = JsonObject(response)
       assertEquals(1, resp.getLong("version"))  }
 
   @Test
   @Order(6)
   fun `checking accounts and transfers view`() {
 
-    Thread.sleep(1000)
+    await().untilCallTo {
+      RestAssured.given()
+        .contentType(ContentType.JSON)
+        .`when`()["/accounts/view1"]
+        .then()
+        .statusCode(200)
+        .extract().response().asString()
+    } matches { responseAsString ->
+      val jsonArray = JsonArray(responseAsString)
+      val json1 = jsonArray.getJsonObject(0)
+      val json2 = jsonArray.getJsonObject(1)
+      UUID.fromString(json1.getString("id")) == account1Id &&
+        json1.getLong("balance") == 400L &&
+        UUID.fromString(json2.getString("id")) == account2Id &&
+        json2.getLong("balance") == 600L
+    }
 
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .`when`()["/accounts/view1"]
-      .then()
-      .statusCode(200)
-      .extract().response()
-
-    val resp = JsonArray(response.body().prettyPrint())
-    assertEquals(2, resp.size())
-
-    val record1 = JsonObject(resp.list[0] as Map<String?, Any?>?)
-    assertEquals(account1Id, UUID.fromString(record1.getString("id")))
-    assertEquals(400L, record1.getLong("balance"))
-
-    val record2 = JsonObject(resp.list[1] as Map<String?, Any?>?)
-    assertEquals(account2Id, UUID.fromString(record2.getString("id")))
-    assertEquals(600L, record2.getLong("balance"))
-
-    val response2 = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .`when`()["/transfers/view1"]
-      .then()
-      .statusCode(200)
-      .extract().response()
-    val resp2 = JsonArray(response2.body().prettyPrint())
-
-    val record3 = JsonObject(resp2.list[0] as Map<String?, Any?>?)
-    assertEquals(transferId, UUID.fromString(record3.getString("id")))
-    assertEquals(false, record3.getBoolean("pending"))
-    assertEquals(true, record3.getBoolean("succeeded"))
-    assertEquals(null, record3.getString("error_message"))
+    await().untilCallTo {
+      RestAssured.given()
+        .contentType(ContentType.JSON)
+        .`when`()["/transfers/view1"]
+        .then()
+        .statusCode(200)
+        .extract().response().asString()
+    } matches { responseAsString ->
+      val jsonArray = JsonArray(responseAsString)
+      val json = jsonArray.getJsonObject(0)
+      transferId == UUID.fromString(json.getString("id")) &&
+        json.getBoolean("pending") == false &&
+        json.getBoolean("succeeded") == true &&
+        json.getString("error_message") == null
+    }
 
   }
 
