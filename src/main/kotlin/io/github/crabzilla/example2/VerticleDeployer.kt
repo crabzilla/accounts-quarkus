@@ -14,10 +14,6 @@ import javax.enterprise.inject.Instance
 @ApplicationScoped
 class VerticleDeployer {
 
-  companion object {
-    private val log = LoggerFactory.getLogger(VerticleDeployer::class.java)
-  }
-
   @Blocking
   fun init(@Observes e: StartupEvent?,
            vertx: Vertx,
@@ -31,6 +27,10 @@ class VerticleDeployer {
       log.info("Deploying subscription " + sub.name())
       Uni.createFrom().completionStage(sub.deploy().toCompletionStage()).await().indefinitely()
     }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(VerticleDeployer::class.java)
   }
 
 }

@@ -16,10 +16,6 @@ import javax.ws.rs.core.MediaType.APPLICATION_JSON
 @Path("/crabzilla")
 internal class CrabzillaResource(private val pgPool: PgPool) {
 
-  companion object {
-    private val log: Logger = LoggerFactory.getLogger(CrabzillaResource::class.java)
-  }
-
   @GET
   @Path("/projections")
   @Produces(APPLICATION_JSON)
@@ -59,6 +55,10 @@ internal class CrabzillaResource(private val pgPool: PgPool) {
         jsonObject.put("type", row.getString("event_type"))
         EventRecord(eventMetadata, jsonObject)
       }
+  }
+
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(CrabzillaResource::class.java)
   }
 
 }

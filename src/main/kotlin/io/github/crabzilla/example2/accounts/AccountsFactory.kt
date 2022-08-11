@@ -15,10 +15,6 @@ import javax.enterprise.context.ApplicationScoped
 
 class AccountsFactory {
 
-  companion object {
-    const val projectionName: String = "accounts-view"
-  }
-
   @ApplicationScoped
   fun create(factory: CommandServiceApiFactory, json: ObjectMapper)
   : CommandServiceApi<AccountCommand> {
@@ -30,10 +26,14 @@ class AccountsFactory {
   @ApplicationScoped
   fun create(factory: SubscriptionApiFactory): SubscriptionApi {
     val config = SubscriptionConfig(projectionName,
-      initialInterval = 100, maxInterval = 1000,
+      initialInterval = 100, interval = 1_000, maxInterval = 120_000,
       stateTypes = listOf("Account"), sink = POSTGRES_PROJECTOR
     )
     return factory.subscription(config, AccountsView1Projector())
+  }
+
+  companion object {
+    const val projectionName: String = "accounts-view"
   }
 
 }

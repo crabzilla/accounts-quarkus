@@ -1,7 +1,6 @@
 package io.github.crabzilla.example2.transfers
 
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
-import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
@@ -15,13 +14,14 @@ import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 
+class RequestTransferRequest(val amount: Double = 0.00,
+                             val fromAccountId: UUID,
+                             val toAccountId: UUID
+)
+
 @Path("/transfers")
 class TransfersResource(private val pgPool: PgPool,
                         private val controller: CommandServiceApi<TransferCommand>) {
-
-  companion object {
-    private val log: Logger = LoggerFactory.getLogger(TransfersResource::class.java)
-  }
 
   @GET
   @Path("/view1")
@@ -41,6 +41,10 @@ class TransfersResource(private val pgPool: PgPool,
     log.info("command $command")
     val future = controller.handle(stateId, command).map { it.toJsonObject() }
     return Uni.createFrom().completionStage(future.toCompletionStage())
+  }
+
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(TransfersResource::class.java)
   }
 
 }

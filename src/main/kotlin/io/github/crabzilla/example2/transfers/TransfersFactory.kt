@@ -7,14 +7,9 @@ import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
 import io.github.crabzilla.stack.command.CommandServiceOptions
 import io.vertx.core.AbstractVerticle
-import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
 
 class TransfersFactory {
-
-  companion object {
-    private val log = LoggerFactory.getLogger(TransfersFactory::class.java)
-  }
 
   @ApplicationScoped
   fun create(factory: CommandServiceApiFactory, json: ObjectMapper, projector: TransferProjector)

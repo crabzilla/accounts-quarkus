@@ -5,19 +5,24 @@ import io.github.crabzilla.example2.accounts.*
 import io.github.crabzilla.example2.accounts.AccountCommand.*
 import io.github.crabzilla.example2.accounts.AccountEvent.*
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.DisplayName
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
 import io.quarkus.test.junit.QuarkusTest
 import java.util.*
 
 @QuarkusTest
+@DisplayName("Accounts domain")
 class AccountsSpecsTest : AnnotationSpec() {
 
-  private val id: UUID = UUID.randomUUID()
+  companion object {
+    private val id: UUID = UUID.randomUUID()
+    private fun spec() = CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+  }
 
   @Test
   fun `when opening an account`() {
-    CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+    spec()
       .whenCommand(OpenAccount(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1") }
       .then { it.events() shouldBe listOf(AccountOpened(id, "cpf1", "person1")) }
@@ -25,7 +30,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when depositing $2000`() {
-    CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+    spec()
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .whenCommand(DepositMoney(2000.00))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 2000.00) }
@@ -39,7 +44,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when depositing $2500`() {
-    CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+    spec()
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 0.00) }
       .then {
@@ -52,7 +57,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when withdrawing 100 from an account with balance = 110`() {
-    CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+    spec()
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .whenCommand(DepositMoney(110.00))
       .whenCommand(WithdrawMoney(100.00))
@@ -68,7 +73,7 @@ class AccountsSpecsTest : AnnotationSpec() {
 
   @Test
   fun `when withdrawing 100 from an account with balance = 50`() {
-    CommandTestSpecification(AccountCommandHandler(), accountEventHandler)
+    spec()
       .givenEvents(AccountOpened(id, "cpf1", "person1"))
       .then { it.state() shouldBe Account(id, "cpf1", "person1", 0.00) }
       .then {

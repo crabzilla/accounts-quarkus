@@ -17,16 +17,18 @@ import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType.APPLICATION_JSON
 
+object AccountsRequests {
+  data class OpenAccountRequest(val cpf: String, val name: String)
+  data class DepositMoneyRequest(val amount: Double)
+  data class WithdrawMoneyRequest(val amount: Double)
+}
+
 @Path("/accounts")
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 internal class AccountsResource(private val pgPool: PgPool,
                                 private val serviceApi: CommandServiceApi<AccountCommand>
 ) {
-
-  companion object {
-    private val log: Logger = LoggerFactory.getLogger(AccountsResource::class.java)
-  }
 
   @GET
   @Path("/view1")
@@ -64,4 +66,7 @@ internal class AccountsResource(private val pgPool: PgPool,
     return Uni.createFrom().completionStage(future.toCompletionStage())
   }
 
+  companion object {
+    private val log: Logger = LoggerFactory.getLogger(AccountsResource::class.java)
+  }
 }

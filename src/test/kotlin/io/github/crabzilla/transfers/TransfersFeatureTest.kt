@@ -3,117 +3,137 @@ package io.github.crabzilla.transfers
 
 import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
 import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
-import io.github.crabzilla.example2.transfers.TransfersRequests.RequestTransferRequest
+import io.github.crabzilla.example2.transfers.RequestTransferRequest
 import io.quarkus.test.junit.QuarkusTest
-import io.restassured.RestAssured
+import io.restassured.RestAssured.given
 import io.restassured.http.ContentType
+import io.restassured.module.kotlin.extensions.Extract
+import io.restassured.module.kotlin.extensions.Given
+import io.restassured.module.kotlin.extensions.Then
+import io.restassured.module.kotlin.extensions.When
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.mutiny.core.Vertx
 import io.vertx.mutiny.pgclient.PgPool
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.hamcrest.CoreMatchers
+import org.hamcrest.core.IsEqual
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 import java.util.*
 import javax.inject.Inject
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-internal class TransfersResourceTest {
-
-  @Inject
-  lateinit var vertx: Vertx
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisplayName("Transfer feature")
+internal class TransfersFeatureTest {
 
   @Inject
   lateinit var pgPool: PgPool
 
-  @Test
-  @Order(1)
-  fun `There no transfers`() {
+  @BeforeAll
+  fun cleanDatabase() {
     pgPool.query("delete from events").execute()
       .flatMap { pgPool.query("delete from commands").execute() }
       .flatMap { pgPool.query("delete from accounts_view").execute() }
       .flatMap { pgPool.query("delete from transfers_view").execute() }
       .await().indefinitely()
-    RestAssured.given()
-      .contentType(ContentType.JSON)
-      .`when`()["/transfers/view1"]
-      .then()
-      .statusCode(200)
-      .body("size()", CoreMatchers.`is`(0))
+  }
+
+  @Test
+  @Order(1)
+  fun `There are no transfers`() {
+    Given {
+      contentType(ContentType.JSON)
+    } When {
+      get("/transfers/view1")
+    } Then {
+      statusCode(200)
+      body("size()", IsEqual.equalTo(0))
+    }
   }
 
   @Test
   @Order(2)
   fun `creating Account 1`() {
-    val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct1")
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .body(request)
-      .`when`().put("/accounts/$account1Id")
-      .then()
-      .statusCode(200)
-      .extract().response().asString()
-      val resp = JsonObject(response)
-      assertEquals(1, resp.getLong("version"))  }
+    val response: JsonObject =
+      Given {
+        val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct1")
+        body(request)
+        contentType(ContentType.JSON)
+      } When {
+        put("/accounts/$account1Id")
+      } Then {
+        statusCode(200)
+      } Extract {
+        JsonObject(body().asString())
+      }
+    assertEquals(1, response.getLong("version"))
+  }
 
   @Test
   @Order(3)
   fun `creating Account 2`() {
-    val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct2")
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .body(request)
-      .`when`().put("/accounts/$account2Id")
-      .then()
-      .statusCode(200)
-      .extract().response().asString()
-      val resp = JsonObject(response)
-      assertEquals(1, resp.getLong("version"))
+    val response: JsonObject =
+      Given {
+        val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct2")
+        body(request)
+        contentType(ContentType.JSON)
+      } When {
+        put("/accounts/$account2Id")
+      } Then {
+        statusCode(200)
+      } Extract {
+        JsonObject(body().asString())
+      }
+    assertEquals(1, response.getLong("version"))
   }
 
   @Test
   @Order(4)
   fun `depositing 1000 on account 1`() {
-    val request = DepositMoneyRequest(1000.0)
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .body(request)
-      .`when`().post("/accounts/$account1Id/deposit")
-      .then()
-      .statusCode(200)
-      .extract().response().asString()
-      val resp = JsonObject(response)
-      assertEquals(2, resp.getLong("version"))  }
+    val response: JsonObject =
+      Given {
+        val request = DepositMoneyRequest(1000.0)
+        body(request)
+        contentType(ContentType.JSON)
+      } When {
+        post("/accounts/$account1Id/deposit")
+      } Then {
+        statusCode(200)
+      } Extract {
+        JsonObject(body().asString())
+      }
+    assertEquals(2, response.getLong("version"))
+  }
 
   @Test
   @Order(5)
   fun `requesting transfer 600 from account 1 to account 2`() {
-    val request = RequestTransferRequest(600.0, account1Id, account2Id)
-    val response = RestAssured.given()
-      .contentType(ContentType.JSON)
-      .body(request)
-      .`when`().put("/transfers/$transferId")
-      .then()
-      .statusCode(200)
-      .extract().response().asString()
-      val resp = JsonObject(response)
-      assertEquals(1, resp.getLong("version"))  }
+    val response: JsonObject =
+      Given {
+        val request = RequestTransferRequest(600.0, account1Id, account2Id)
+        body(request)
+        contentType(ContentType.JSON)
+      } When {
+        put("/transfers/$transferId")
+      } Then {
+        statusCode(200)
+      } Extract {
+        JsonObject(body().asString())
+      }
+    assertEquals(1, response.getLong("version"))
+  }
 
   @Test
   @Order(6)
   fun `checking accounts and transfers view`() {
 
     await().untilCallTo {
-      RestAssured.given()
+      given()
         .contentType(ContentType.JSON)
-        .`when`()["/accounts/view1"]
+        .When { get("/accounts/view1") }
         .then()
         .statusCode(200)
         .extract().response().asString()
@@ -128,9 +148,9 @@ internal class TransfersResourceTest {
     }
 
     await().untilCallTo {
-      RestAssured.given()
+      given()
         .contentType(ContentType.JSON)
-        .`when`()["/transfers/view1"]
+        .When { get("/transfers/view1") }
         .then()
         .statusCode(200)
         .extract().response().asString()
