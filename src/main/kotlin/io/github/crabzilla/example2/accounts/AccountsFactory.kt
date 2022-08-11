@@ -26,7 +26,7 @@ class AccountsFactory {
   @ApplicationScoped
   fun create(factory: SubscriptionApiFactory): SubscriptionApi {
     val config = SubscriptionConfig(projectionName,
-      initialInterval = 100, interval = 1_000, maxInterval = 120_000,
+      initialInterval = 100, interval = 500, maxInterval = 60_000,
       stateTypes = listOf("Account"), sink = POSTGRES_PROJECTOR
     )
     return factory.subscription(config, AccountsView1Projector())

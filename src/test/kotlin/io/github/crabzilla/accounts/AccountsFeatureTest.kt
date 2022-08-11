@@ -12,6 +12,9 @@ import io.restassured.module.kotlin.extensions.When
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.pgclient.PgPool
+import org.awaitility.Awaitility.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.core.IsEqual.equalTo
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -125,20 +128,25 @@ class AccountsFeatureTest {
   @Test
   @Order(6)
   fun `then the balance is 400`() {
-    val response: JsonArray =
-      Given {
-        contentType(ContentType.JSON)
-      } When {
-        get("/accounts/view1")
-      } Then {
-        statusCode(200)
-        body("size()", equalTo(1))
-      } Extract {
-        JsonArray(body().asString())
+    await().untilCallTo {
+        Given {
+          contentType(ContentType.JSON)
+        } When {
+          get("/accounts/view1")
+        } Then {
+          statusCode(200)
+          body("size()", equalTo(1))
+        } Extract {
+          JsonArray(body().asString())
+            .getJsonObject(0)
+        }
+    } matches { json ->
+      with(json!!) {
+        println(this)
+        UUID.fromString(getString("id")) == id &&
+                getLong("balance")== 400L
       }
-    val record1 = response.getJsonObject(0)
-    assertEquals(id, UUID.fromString(record1.getString("id")))
-    assertEquals(0L, record1.getLong("balance"))
+    }
   }
 
   companion object {
