@@ -60,7 +60,7 @@ class TransferService(
       promise.complete()
     }.onFailure { error ->
       // new transaction
-      log.info("Step 3 - Will register a failed transfers", error)
+      log.info("Step 3 - Will register a failed transfers {}", error.message)
       val registerFailureCommand = RegisterResult(false, error.message)
       transferController.handle(transferId, registerFailureCommand)
         .onSuccess { promise.complete() }

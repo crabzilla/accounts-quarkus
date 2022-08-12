@@ -13,7 +13,7 @@ import java.util.*
 
 @QuarkusTest
 @DisplayName("Accounts domain")
-class AccountsSpecsTest : AnnotationSpec() {
+class AccountsDomain : AnnotationSpec() {
 
   companion object {
     private val id: UUID = UUID.randomUUID()
@@ -84,4 +84,26 @@ class AccountsSpecsTest : AnnotationSpec() {
       }
   }
 
+  @Test
+  fun `when an account already exists`() {
+    spec()
+      .givenEvents(AccountOpened(id, "cpf1", "person1"))
+      .then {
+        val exception = shouldThrow<AccountAlreadyExists> {
+          it.whenCommand(OpenAccount(id, "cpf1", "person1"))
+        }
+        exception.message shouldBe "Account $id already exists"
+      }
+  }
+
+  @Test
+  fun `when an account was not found`() {
+    spec()
+      .then {
+        val exception = shouldThrow<AccountNotFound> {
+          it.whenCommand(WithdrawMoney(2500.00))
+        }
+        exception.message shouldBe "Account not found"
+      }
+  }
 }

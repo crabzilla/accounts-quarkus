@@ -5,13 +5,33 @@ import io.github.crabzilla.stack.DefaultCrabzillaContextFactory
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
 import io.github.crabzilla.stack.command.DefaultCommandServiceApiFactory
 import io.github.crabzilla.stack.subscription.DefaultSubscriptionApiFactory
+import io.github.crabzilla.stack.subscription.SubscriptionApi
 import io.github.crabzilla.stack.subscription.SubscriptionApiFactory
+import io.quarkus.runtime.StartupEvent
+import io.smallrye.common.annotation.Blocking
+import io.smallrye.config.ConfigMapping
+import io.smallrye.config.WithName
+import io.smallrye.mutiny.Uni
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
+import org.slf4j.LoggerFactory
 import javax.enterprise.context.ApplicationScoped
+import javax.enterprise.event.Observes
+import javax.enterprise.inject.Instance
 
-class CrabzillaContextFactory {
+
+@ConfigMapping(prefix = "quarkus.datasource")
+interface QuarkusPgConfig {
+  fun dbKind(): String
+  fun username(): String
+  fun password(): String
+  @WithName("reactive.url")
+  fun url(): String
+}
+
+class CrabzillaFactory {
 
   @ApplicationScoped
   fun context(vertx: Vertx, pgPool: PgPool, quarkusPgConfig: QuarkusPgConfig): CrabzillaContext {
@@ -33,6 +53,31 @@ class CrabzillaContextFactory {
   @ApplicationScoped
   fun subscriptionFactory(context: CrabzillaContext) : SubscriptionApiFactory {
     return DefaultSubscriptionApiFactory(context)
+  }
+
+}
+
+@ApplicationScoped
+class VerticleDeployer {
+
+  @Blocking
+  fun init(@Observes e: StartupEvent?,
+           vertx: io.vertx.mutiny.core.Vertx,
+           verticles: Instance<AbstractVerticle>,
+           subs: Instance<SubscriptionApi>
+  ) {
+    for (verticle in verticles) {
+      log.info("Deploying verticle " + verticle::class.simpleName)
+      vertx.deployVerticle(verticle).await().indefinitely()
+    }
+    for (sub in subs) {
+      log.info("Deploying subscription " + sub.name())
+      Uni.createFrom().completionStage(sub.deploy().toCompletionStage()).await().indefinitely()
+    }
+  }
+
+  companion object {
+    private val log = LoggerFactory.getLogger(VerticleDeployer::class.java)
   }
 
 }

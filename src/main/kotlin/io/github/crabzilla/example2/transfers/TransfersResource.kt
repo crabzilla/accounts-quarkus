@@ -16,8 +16,7 @@ import javax.ws.rs.core.MediaType
 
 class RequestTransferRequest(val amount: Double = 0.00,
                              val fromAccountId: UUID,
-                             val toAccountId: UUID
-)
+                             val toAccountId: UUID)
 
 @Path("/transfers")
 class TransfersResource(private val pgPool: PgPool,

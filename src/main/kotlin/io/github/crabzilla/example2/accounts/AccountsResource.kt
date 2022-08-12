@@ -1,9 +1,6 @@
 package io.github.crabzilla.example2.accounts
 
 import io.github.crabzilla.example2.accounts.AccountCommand.*
-import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
-import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
-import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
@@ -17,11 +14,9 @@ import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType.APPLICATION_JSON
 
-object AccountsRequests {
-  data class OpenAccountRequest(val cpf: String, val name: String)
-  data class DepositMoneyRequest(val amount: Double)
-  data class WithdrawMoneyRequest(val amount: Double)
-}
+data class OpenAccountRequest(val cpf: String, val name: String)
+data class DepositMoneyRequest(val amount: Double)
+data class WithdrawMoneyRequest(val amount: Double)
 
 @Path("/accounts")
 @Consumes(APPLICATION_JSON)

@@ -1,8 +1,8 @@
 package io.github.crabzilla.accounts
 
-import io.github.crabzilla.example2.accounts.AccountsRequests.DepositMoneyRequest
-import io.github.crabzilla.example2.accounts.AccountsRequests.OpenAccountRequest
-import io.github.crabzilla.example2.accounts.AccountsRequests.WithdrawMoneyRequest
+import io.github.crabzilla.example2.accounts.DepositMoneyRequest
+import io.github.crabzilla.example2.accounts.OpenAccountRequest
+import io.github.crabzilla.example2.accounts.WithdrawMoneyRequest
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.http.ContentType
 import io.restassured.module.kotlin.extensions.Extract
@@ -25,7 +25,7 @@ import javax.inject.Inject
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Accounts feature")
-class AccountsFeatureTest {
+class BasicScenarios {
 
   @Inject
   lateinit var pgPool: PgPool
