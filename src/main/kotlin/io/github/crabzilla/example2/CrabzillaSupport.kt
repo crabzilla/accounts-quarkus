@@ -58,18 +58,13 @@ class CrabzillaFactory {
 }
 
 @ApplicationScoped
-class VerticleDeployer {
+class CrabzillaDeployer {
 
   @Blocking
   fun init(@Observes e: StartupEvent?,
            vertx: io.vertx.mutiny.core.Vertx,
-           verticles: Instance<AbstractVerticle>,
            subs: Instance<SubscriptionApi>
   ) {
-    for (verticle in verticles) {
-      log.info("Deploying verticle " + verticle::class.simpleName)
-      vertx.deployVerticle(verticle).await().indefinitely()
-    }
     for (sub in subs) {
       log.info("Deploying subscription " + sub.name())
       Uni.createFrom().completionStage(sub.deploy().toCompletionStage()).await().indefinitely()
@@ -77,7 +72,7 @@ class VerticleDeployer {
   }
 
   companion object {
-    private val log = LoggerFactory.getLogger(VerticleDeployer::class.java)
+    private val log = LoggerFactory.getLogger(CrabzillaDeployer::class.java)
   }
 
 }

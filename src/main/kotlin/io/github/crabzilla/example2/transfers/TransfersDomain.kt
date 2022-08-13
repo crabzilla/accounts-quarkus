@@ -68,22 +68,16 @@ class TransferAlreadyExists(id: UUID) : IllegalArgumentException("Transfer $id a
 class TransferNotFound : NullPointerException("Transfer not found")
 
 class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, TransferEvent>(transferEventHandler) {
-  companion object {
-    private fun request(id: UUID,
-                        amount: Double = 0.00,
-                        fromAccountId: UUID,
-                        toAccountId: UUID): List<TransferEvent> {
-      return listOf(TransferRequested(id, amount, fromAccountId, toAccountId))
-    }
-  }
   override fun handle(command: TransferCommand, state: Transfer?): CommandSession<Transfer, TransferEvent> {
     return when (command) {
       is RequestTransfer -> {
-        if (state != null) throw TransferAlreadyExists(command.id)
-        withNew(request(command.id, command.amount, command.fromAccountId, command.toAccountId))
+        with (command) {
+          if (state != null) throw TransferAlreadyExists(id)
+          withNew(listOf(TransferRequested(id, amount, fromAccountId, toAccountId)))
+        }
       }
       is RegisterResult -> {
-        if (state == null) throw TransferNotFound() // TODO should have transferId
+        if (state == null) throw TransferNotFound()
         with(state).execute {
           listOf(TransferConcluded(command.succeeded, command.errorMessage))
         }

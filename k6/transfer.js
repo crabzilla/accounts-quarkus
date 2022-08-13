@@ -21,16 +21,16 @@ export default function () {
   = http.put('http://0.0.0.0:8080/transfers/25a4b17c-3512-11ec-8d3d-0242ac130005', requestTransfer, params);
 
    check(resp1, {
-     'is status 201': (r) => r.status === 201,
-   });
-   check(resp1, {
-     'is status 201': (r) => r.status === 201,
+     'is status 200': (r) => r.status === 200,
    });
    check(resp2, {
-     'is status 201': (r) => r.status === 201,
+     'is status 200': (r) => r.status === 200,
    });
    check(resp3, {
-     'is status 201': (r) => r.status === 201,
+     'is status 200': (r) => r.status === 200,
+   });
+   check(resp4, {
+     'is status 200': (r) => r.status === 200,
    });
 
 

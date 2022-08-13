@@ -1,10 +1,14 @@
 import http from 'k6/http';
+import { check } from 'k6';
 
 export default function () {
   const id = create_UUID()
   const payload = JSON.stringify({cpf: id, name: id});
   const params = { headers: { 'Content-Type': 'application/json' } };
-  let r = http.put('http://0.0.0.0:8080/accounts/' + id, payload, params);
+  const resp1 = http.put('http://0.0.0.0:8080/accounts/' + id, payload, params);
+  check(resp1, {
+    'is status 200': (r) => r.status === 200,
+  });
 };
 
 function create_UUID(){

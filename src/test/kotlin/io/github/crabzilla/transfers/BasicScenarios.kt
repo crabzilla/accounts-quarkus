@@ -128,7 +128,7 @@ internal class BasicScenarios {
 
   @Test
   @Order(6)
-  fun `checking accounts and transfers view`() {
+  fun `checking accounts view`() {
 
     await().untilCallTo {
       given()
@@ -142,10 +142,16 @@ internal class BasicScenarios {
       val json1 = jsonArray.getJsonObject(0)
       val json2 = jsonArray.getJsonObject(1)
       UUID.fromString(json1.getString("id")) == account1Id &&
-        json1.getLong("balance") == 400L &&
-        UUID.fromString(json2.getString("id")) == account2Id &&
-        json2.getLong("balance") == 600L
+              json1.getLong("balance") == 400L &&
+              UUID.fromString(json2.getString("id")) == account2Id &&
+              json2.getLong("balance") == 600L
     }
+
+  }
+
+  @Test
+  @Order(6)
+  fun `checking transfers view`() {
 
     await().untilCallTo {
       given()

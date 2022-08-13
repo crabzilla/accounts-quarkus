@@ -91,7 +91,7 @@ internal class ErrorsScenarios {
 
   @Test
   @Order(6)
-  fun `checking accounts and transfers view`() {
+  fun `checking accounts view`() {
 
     await().untilCallTo {
       given()
@@ -104,9 +104,14 @@ internal class ErrorsScenarios {
       val jsonArray = JsonArray(responseAsString)
       val json1 = jsonArray.getJsonObject(0)
       jsonArray.size() == 1
-        && UUID.fromString(json1.getString("id")) == account1Id
-        && json1.getLong("balance") == 0L
+              && UUID.fromString(json1.getString("id")) == account1Id
+              && json1.getLong("balance") == 0L
     }
+  }
+
+  @Test
+  @Order(7)
+  fun `checking transfers view`() {
 
     await().untilCallTo {
       given()
@@ -118,7 +123,6 @@ internal class ErrorsScenarios {
     } matches { responseAsString ->
       val jsonArray = JsonArray(responseAsString)
       val json = jsonArray.getJsonObject(0)
-      println(json.encodePrettily())
       transferId == UUID.fromString(json.getString("id")) &&
         json.getBoolean("pending") == false &&
         json.getBoolean("succeeded") == false &&
