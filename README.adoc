@@ -110,3 +110,7 @@ And you will see something like:
 
 ```
 
+=== Inspiration links
+
+* https://www.youtube.com/watch?v=GzrZworHpIk
+* http://www.codingthearchitecture.com/2015/03/08/package_by_component_and_architecturally_aligned_testing.html
