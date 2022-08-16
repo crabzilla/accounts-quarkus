@@ -4,9 +4,7 @@ import io.github.crabzilla.example2.accounts.AccountCommand.*
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
-import io.smallrye.mutiny.vertx.UniHelper
 import io.smallrye.mutiny.vertx.UniHelper.toUni
-import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.mutiny.pgclient.PgPool
 import io.vertx.mutiny.sqlclient.Row

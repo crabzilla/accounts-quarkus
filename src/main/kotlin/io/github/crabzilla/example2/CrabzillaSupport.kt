@@ -12,7 +12,6 @@ import io.smallrye.common.annotation.Blocking
 import io.smallrye.config.ConfigMapping
 import io.smallrye.config.WithName
 import io.smallrye.mutiny.Uni
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgPool
