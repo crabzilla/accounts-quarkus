@@ -1,6 +1,22 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
+export const options = {
+	  discardResponseBodies: true,
+	  scenarios: {
+	    accounts: {
+	      executor: 'ramping-vus',
+	      startVUs: 10,
+	      stages: [
+	        { duration: '10s', target: 300 },
+	        { duration: '60s', target: 1000 },
+ 	        { duration: '10s', target: 10 },
+	      ],
+	      gracefulRampDown: '1s',
+	    },
+	  },
+	};
+
 export default function () {
   const id = create_UUID()
   const payload = JSON.stringify({cpf: id, name: id});

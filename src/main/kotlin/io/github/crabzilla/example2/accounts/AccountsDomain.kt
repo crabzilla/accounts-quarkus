@@ -72,18 +72,15 @@ class AccountCommandHandler : CommandHandler<Account, AccountCommand, AccountEve
   }
 
   override fun handle(command: AccountCommand, state: Account?): CommandSession<Account, AccountEvent> {
-    return when (command) {
-      is OpenAccount -> {
-        if (state != null) throw AccountAlreadyExists(command.id)
-        withNew(listOf(AccountOpened(id = command.id, command.cpf, command.name)))
-      }
-      else -> {
-        if (state == null) throw AccountNotFound()
-        when (command) {
-          is DepositMoney -> with(state).execute { it.deposit(command.amount) }
-          is WithdrawMoney -> with(state).execute { it.withdraw(command.amount) }
-          else -> throw IllegalArgumentException("Unknown command ${command::class.java.name}")
+    fun nonNullState() = state ?: throw AccountNotFound()
+    with(command) {
+      return when (this) {
+        is OpenAccount -> {
+          if (state != null) throw AccountAlreadyExists(id)
+          withNew(listOf(AccountOpened(id = id, cpf, name)))
         }
+        is DepositMoney -> with(nonNullState()).execute { it.deposit(amount) }
+        is WithdrawMoney -> with(nonNullState()).execute { it.withdraw(amount) }
       }
     }
   }
