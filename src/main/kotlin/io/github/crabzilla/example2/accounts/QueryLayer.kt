@@ -13,9 +13,9 @@ import io.vertx.sqlclient.Tuple
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
-private object QueryLayer {
+private class QueryLayer {
 
-  private const val projectionName: String = "accounts-view"
+  private val projectionName: String = "accounts-view"
 
   @ApplicationScoped
   fun create(factory: SubscriptionApiFactory): SubscriptionApi {
@@ -27,14 +27,14 @@ private object QueryLayer {
   }
 
   private class AccountsView1Projector : EventProjector {
-    override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
+    override fun project(conn: SqlConnection, eventRecord: EventRecord): Future<Void> {
       fun updateBalance(conn: SqlConnection, id: UUID, finalBalance: Double) : Future<Void> {
         return conn
           .preparedQuery("update accounts_view set balance = $2 where id = $1")
           .execute(Tuple.of(id, finalBalance))
           .mapEmpty()
       }
-      val (payload, _, id) = record.extract()
+      val (payload, _, id) = eventRecord.extract()
       return when (payload.getString("type")) {
         "MoneyDeposited" ->
           updateBalance(conn, id, payload.getDouble("finalBalance"))

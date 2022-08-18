@@ -19,134 +19,149 @@ import java.lang.management.ManagementFactory
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
-data class PendingTransfer(
-  val id: UUID, val amount: Double, val fromAccountId: UUID, val toAccountId: UUID
-)
+private class ProcessorsLayer {
 
-@ApplicationScoped
-class TransferService(
-  private val acctController: CommandServiceApi<AccountCommand>,
-  private val transferController: CommandServiceApi<TransferCommand>,
-) {
+    @ApplicationScoped
+    fun create(context: CrabzillaContext, service: TransferService): AbstractVerticle {
+        return PendingTransfersVerticle(context.pgPool(), context.pgSubscriber(), service)
+    }
 
-  /**
-   * Steps within the same db transaction:
-   * fromAcctId withdrawn
-   * toAcctId deposit
-   * transferId register success
-   * in case of error, the failure will be registered into a new db tx
-   */
-  fun transfer(pendingTransfer: PendingTransfer): Future<Void> {
+    data class PendingTransfer(
+        val id: UUID, val amount: Double, val fromAccountId: UUID, val toAccountId: UUID
+    )
 
-    val promise = Promise.promise<Void>()
-    val transferId = pendingTransfer.id
+    interface TransferService {
+        fun transfer(pendingTransfer: PendingTransfer): Future<Void>
+    }
 
-    acctController.withinTransaction { conn ->
-      log.info("Step 1 - Will withdrawn from account {}", pendingTransfer.fromAccountId)
-      val withdrawnCommand = WithdrawMoney(pendingTransfer.amount)
-      acctController.handle(conn, pendingTransfer.fromAccountId, withdrawnCommand)
-        .compose {
-          log.info("Step 2 - Will deposit to account {}", pendingTransfer.toAccountId)
-          val depositCommand = DepositMoney(pendingTransfer.amount)
-          acctController.handle(conn, pendingTransfer.toAccountId, depositCommand)
-        }.compose {
-          log.info("Step 3 - Will register a succeeded transfers")
-          val registerSuccessCommand = RegisterResult(true, null)
-          transferController.handle(conn, transferId, registerSuccessCommand)
+    @ApplicationScoped
+    private class TransferServiceDefault(
+        private val acctController: CommandServiceApi<AccountCommand>,
+        private val transferController: CommandServiceApi<TransferCommand>,
+    ) : TransferService {
+
+        /**
+         * Steps within the same db transaction:
+         * fromAcctId withdrawn
+         * toAcctId deposit
+         * transferId register success
+         * in case of error, the failure will be registered into a new db tx
+         */
+        override fun transfer(pendingTransfer: PendingTransfer): Future<Void> {
+
+            val promise = Promise.promise<Void>()
+            val transferId = pendingTransfer.id
+
+            acctController.withinTransaction { conn ->
+                log.info("Step 1 - Will withdrawn from account {}", pendingTransfer.fromAccountId)
+                val withdrawnCommand = WithdrawMoney(pendingTransfer.amount)
+                acctController.handle(conn, pendingTransfer.fromAccountId, withdrawnCommand)
+                    .compose {
+                        log.info("Step 2 - Will deposit to account {}", pendingTransfer.toAccountId)
+                        val depositCommand = DepositMoney(pendingTransfer.amount)
+                        acctController.handle(conn, pendingTransfer.toAccountId, depositCommand)
+                    }.compose {
+                        log.info("Step 3 - Will register a succeeded transfers")
+                        val registerSuccessCommand = RegisterResult(true, null)
+                        transferController.handle(conn, transferId, registerSuccessCommand)
+                    }
+            }
+                .onSuccess {
+                    log.info("Success !!!")
+                    promise.complete()
+                }.onFailure { error ->
+                    // new transaction
+                    log.info("Step 3 - Will register a failed transfers {}", error.message)
+                    val registerFailureCommand = RegisterResult(false, error.message)
+                    transferController.handle(transferId, registerFailureCommand)
+                        .onSuccess { promise.complete() }
+                }
+
+            return promise.future()
+
         }
-    }
-    .onSuccess {
-      log.info("Success !!!")
-      promise.complete()
-    }.onFailure { error ->
-      // new transaction
-      log.info("Step 3 - Will register a failed transfers {}", error.message)
-      val registerFailureCommand = RegisterResult(false, error.message)
-      transferController.handle(transferId, registerFailureCommand)
-        .onSuccess { promise.complete() }
-    }
 
-    return promise.future()
-
-  }
-
-  companion object {
-    private val log: Logger = LoggerFactory.getLogger(TransferService::class.java)
-  }
-
-}
-
-class PendingTransfersVerticle(private val pgPool: PgPool,
-                               private val subscriber: PgSubscriber,
-                               private val service: TransferService
-) : AbstractVerticle() {
-
-  private var isBusy: Boolean = false
-
-  override fun start() {
-
-    log.info("{} starting with interval (ms) = {}", node,
-      config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
-
-    vertx.setPeriodic(config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)) {
-      pullAndProcess()
-    }
-
-    subscriber.connect()
-      .onSuccess {
-        subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
-          .handler { stateType ->
-            if ("Transfer" == stateType) pullAndProcess()
-          }
-      }.onFailure {
-        log.info("Failed to connect on subscriber")
-      }
-
-  }
-
-  private fun pullAndProcess(): Future<Void> {
-    if (isBusy) {
-      log.info("Still busy.. wil try next time")
-      return Future.succeededFuture()
-    }
-    return getPendingTransfers()
-      .compose { pendingList ->
-        log.info("Found ${pendingList.size} pending transfers")
-        val initialFuture = Future.succeededFuture<Void>()
-        pendingList.fold(
-          initialFuture
-        ) { currentFuture: Future<Void>, pendingTransfer ->
-          currentFuture.compose {
-            service.transfer(pendingTransfer)
-          }
+        companion object {
+            private val log: Logger = LoggerFactory.getLogger(TransferServiceDefault::class.java)
         }
-      }.onComplete {
-        isBusy = false
-      }
-  }
 
-  /**
-   * Get 100 first pending transfers
-   */
-  private fun getPendingTransfers(): Future<List<PendingTransfer>> {
-    return pgPool.preparedQuery("select * from transfers_view where pending = true LIMIT 100")
-      .execute()
-      .map { rs: RowSet<Row> ->
-        rs.iterator().asSequence().map { row ->
-          PendingTransfer(
-            row.getUUID("id"),
-            row.getDouble("amount"),
-            row.getUUID("from_acct_id"),
-            row.getUUID("to_acct_id")
-          )
-        }.toList()
-      }
-  }
+    }
 
-  companion object {
-    private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
-    private val node = ManagementFactory.getRuntimeMXBean().name
-    private const val DEFAULT_INTERVAL = 30_000L
-  }
+    private class PendingTransfersVerticle(
+        private val pgPool: PgPool,
+        private val subscriber: PgSubscriber,
+        private val service: TransferService
+    ) : AbstractVerticle() {
 
+        private var isBusy: Boolean = false
+
+        override fun start() {
+
+            log.info(
+                "{} starting with interval (ms) = {}", node,
+                config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)
+            )
+
+            vertx.setPeriodic(config().getLong("transfers.processor.interval", DEFAULT_INTERVAL)) {
+                pullAndProcess()
+            }
+
+            subscriber.connect()
+                .onSuccess {
+                    subscriber.channel(CrabzillaContext.POSTGRES_NOTIFICATION_CHANNEL)
+                        .handler { stateType ->
+                            if ("Transfer" == stateType) pullAndProcess()
+                        }
+                }.onFailure {
+                    log.info("Failed to connect on subscriber")
+                }
+
+        }
+
+        private fun pullAndProcess(): Future<Void> {
+            if (isBusy) {
+                log.info("Still busy.. wil try next time")
+                return Future.succeededFuture()
+            }
+            return getPendingTransfers()
+                .compose { pendingList ->
+                    log.info("Found ${pendingList.size} pending transfers")
+                    val initialFuture = Future.succeededFuture<Void>()
+                    pendingList.fold(
+                        initialFuture
+                    ) { currentFuture: Future<Void>, pendingTransfer ->
+                        currentFuture.compose {
+                            service.transfer(pendingTransfer)
+                        }
+                    }
+                }.onComplete {
+                    isBusy = false
+                }
+        }
+
+        /**
+         * Get 100 first pending transfers
+         */
+        private fun getPendingTransfers(): Future<List<PendingTransfer>> {
+            return pgPool.preparedQuery("select * from transfers_view where pending = true LIMIT 100")
+                .execute()
+                .map { rs: RowSet<Row> ->
+                    rs.iterator().asSequence().map { row ->
+                        PendingTransfer(
+                            row.getUUID("id"),
+                            row.getDouble("amount"),
+                            row.getUUID("from_acct_id"),
+                            row.getUUID("to_acct_id")
+                        )
+                    }.toList()
+                }
+        }
+
+        companion object {
+            private val log = LoggerFactory.getLogger(PendingTransfersVerticle::class.java)
+            private val node = ManagementFactory.getRuntimeMXBean().name
+            private const val DEFAULT_INTERVAL = 30_000L
+        }
+
+    }
 }

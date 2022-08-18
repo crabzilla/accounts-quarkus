@@ -2,13 +2,11 @@ package io.github.crabzilla.example2.transfers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.crabzilla.jackson.JacksonJsonObjectSerDer
-import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.stack.EventProjector
 import io.github.crabzilla.stack.EventRecord
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
 import io.github.crabzilla.stack.command.CommandServiceOptions
-import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
@@ -25,11 +23,6 @@ private class CommandLayer {
     val jsonSerDer = JacksonJsonObjectSerDer(json, transferComponent)
     val options = CommandServiceOptions(eventProjector = TransferProjector())
     return factory.commandService(transferComponent, jsonSerDer, options)
-  }
-
-  @ApplicationScoped
-  fun create(context: CrabzillaContext, service: TransferService): AbstractVerticle {
-    return PendingTransfersVerticle(context.pgPool(), context.pgSubscriber(), service)
   }
 
   private class TransferProjector : EventProjector {

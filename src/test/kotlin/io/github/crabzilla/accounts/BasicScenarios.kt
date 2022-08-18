@@ -142,7 +142,6 @@ class BasicScenarios {
         }
     } matches { json ->
       with(json!!) {
-        println(this)
         UUID.fromString(getString("id")) == id &&
                 getLong("balance")== 400L
       }
