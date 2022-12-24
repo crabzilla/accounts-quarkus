@@ -10,13 +10,12 @@ import io.vertx.mutiny.sqlclient.Row
 import org.jboss.resteasy.reactive.RestPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 
 class RequestTransferRequest(val amount: Double = 0.00,
-                             val fromAccountId: UUID,
-                             val toAccountId: UUID)
+                             val fromAccountId: String,
+                             val toAccountId: String)
 
 @Path("/transfers")
 class TransfersResource(private val pgPool: PgPool,
@@ -35,7 +34,7 @@ class TransfersResource(private val pgPool: PgPool,
   @Path("/{stateId}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  fun open(@RestPath("stateId") stateId: UUID, request: RequestTransferRequest): Uni<JsonObject> {
+  fun open(@RestPath("stateId") stateId: String, request: RequestTransferRequest): Uni<JsonObject> {
     val command = RequestTransfer(stateId, request.amount, request.fromAccountId, request.toAccountId)
     log.info("command $command")
     val future = controller.handle(stateId, command).map { it.toJsonObject() }

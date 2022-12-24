@@ -1,5 +1,6 @@
 package io.github.crabzilla.example2
 
+import com.github.f4b6a3.ulid.UlidCreator
 import io.github.crabzilla.stack.CrabzillaContext
 import io.github.crabzilla.stack.DefaultCrabzillaContextFactory
 import io.github.crabzilla.stack.command.CommandServiceApiFactory
@@ -32,6 +33,8 @@ interface QuarkusPgConfig {
 
 class CrabzillaFactory {
 
+  private val ulidFunction = { UlidCreator.getMonotonicUlid().toString() }
+
   @ApplicationScoped
   fun context(vertx: Vertx, pgPool: PgPool, quarkusPgConfig: QuarkusPgConfig): CrabzillaContext {
     fun toPgConfig(quarkusPgConfig: QuarkusPgConfig): JsonObject {
@@ -41,7 +44,7 @@ class CrabzillaFactory {
         .put("password", quarkusPgConfig.password())
     }
     val pgConfig: JsonObject = toPgConfig(quarkusPgConfig)
-    return DefaultCrabzillaContextFactory().new(vertx, pgConfig, pgPool)
+    return DefaultCrabzillaContextFactory().new(vertx, pgConfig, pgPool, ulidFunction)
   }
 
   @ApplicationScoped

@@ -16,11 +16,10 @@ import io.vertx.sqlclient.RowSet
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
-import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
 data class PendingTransfer(
-  val id: UUID, val amount: Double, val fromAccountId: UUID, val toAccountId: UUID
+  val id: String, val amount: Double, val fromAccountId: String, val toAccountId: String
 )
 
 @ApplicationScoped
@@ -83,7 +82,7 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
 
   private var isBusy: Boolean = false
 
-  override fun start() {
+  override fun start(promise: Promise<Void>) {
 
     log.info("{} starting with interval (ms) = {}", node,
       config().getLong("transfers.processor.interval", DEFAULT_INTERVAL))
@@ -99,7 +98,9 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
             if ("Transfer" == stateType) pullAndProcess()
           }
       }.onFailure {
-        log.info("Failed to connect on subscriber")
+        promise.fail("Failed to connect on subscriber")
+      }.onSuccess {
+        promise.complete()
       }
 
   }
@@ -134,10 +135,10 @@ class PendingTransfersVerticle(private val pgPool: PgPool,
       .map { rs: RowSet<Row> ->
         rs.iterator().asSequence().map { row ->
           PendingTransfer(
-            row.getUUID("id"),
+            row.getString("id"),
             row.getDouble("amount"),
-            row.getUUID("from_acct_id"),
-            row.getUUID("to_acct_id")
+            row.getString("from_acct_id"),
+            row.getString("to_acct_id")
           )
         }.toList()
       }

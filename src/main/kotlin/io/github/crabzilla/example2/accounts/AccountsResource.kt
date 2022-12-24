@@ -1,5 +1,6 @@
 package io.github.crabzilla.example2.accounts
 
+
 import io.github.crabzilla.example2.accounts.AccountCommand.*
 import io.github.crabzilla.stack.command.CommandServiceApi
 import io.smallrye.mutiny.Multi
@@ -11,9 +12,9 @@ import io.vertx.mutiny.sqlclient.Row
 import org.jboss.resteasy.reactive.RestPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.*
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType.APPLICATION_JSON
+
 
 data class OpenAccountRequest(val cpf: String, val name: String)
 data class DepositMoneyRequest(val amount: Double)
@@ -36,15 +37,15 @@ private class AccountsResource(private val pgPool: PgPool,
 
   @PUT
   @Path("/{stateId}")
-  fun open(@RestPath("stateId") stateId: UUID, request: OpenAccountRequest): Uni<JsonObject> {
+  fun open(@RestPath("stateId") stateId: String, request: OpenAccountRequest): Uni<String> {
     val command = OpenAccount(stateId, request.cpf, request.name)
     log.debug("command $command")
-    return toUni(serviceApi.handle(stateId, command).map { event -> event.toJsonObject() })
+    return toUni(serviceApi.handle(stateId, command).map { event -> event.toJsonObject().encode() })
   }
 
   @POST
   @Path("{stateId}/deposit")
-  fun deposit(@RestPath("stateId") stateId: UUID, request: DepositMoneyRequest): Uni<JsonObject> {
+  fun deposit(@RestPath("stateId") stateId: String, request: DepositMoneyRequest): Uni<JsonObject> {
     val command = DepositMoney(request.amount)
     log.debug("command $stateId - $command")
     return toUni(serviceApi.handle(stateId, command).map { event -> event.toJsonObject() })
@@ -52,7 +53,7 @@ private class AccountsResource(private val pgPool: PgPool,
 
   @POST
   @Path("{stateId}/withdraw")
-  fun withdraw(@RestPath("stateId") stateId: UUID, request: WithdrawMoneyRequest): Uni<JsonObject> {
+  fun withdraw(@RestPath("stateId") stateId: String, request: WithdrawMoneyRequest): Uni<JsonObject> {
     val command = WithdrawMoney(request.amount)
     log.debug("command $command")
     return toUni(serviceApi.handle(stateId, command).map { event -> event.toJsonObject() })

@@ -14,10 +14,9 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
-import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
-private class CommandLayer {
+class CommandLayer {
 
   @ApplicationScoped
   fun create(factory: CommandServiceApiFactory, json: ObjectMapper)
@@ -38,12 +37,12 @@ private class CommandLayer {
       private val log = LoggerFactory.getLogger(TransferProjector::class.java)
     }
 
-    override fun project(conn: SqlConnection, record: EventRecord): Future<Void> {
-      fun request(id: UUID, payload: JsonObject): Future<Void> {
+    override fun project(conn: SqlConnection, eventRecord: EventRecord): Future<Void> {
+      fun request(id: String, payload: JsonObject): Future<Void> {
         val tuple = Tuple.of(id,
           payload.getDouble("amount"),
-          UUID.fromString(payload.getString("fromAccountId")),
-          UUID.fromString(payload.getString("toAccountId"))
+          payload.getString("fromAccountId"),
+          payload.getString("toAccountId")
         )
         log.info("Will project new transfers {}", tuple.deepToString())
         return conn
@@ -53,24 +52,31 @@ private class CommandLayer {
           .execute(tuple)
           .mapEmpty()
       }
-      fun register(id: UUID, payload: JsonObject): Future<Void> {
-        val tuple = Tuple.of(id,
-          payload.getBoolean("succeeded"),
-          payload.getString("errorMessage")
-        )
-        log.info("Will project transfers result {}", tuple.deepToString())
+      fun registerSuccess(id: String): Future<Void> {
+        log.info("Will project transfers success for {}", id)
         return conn
           .preparedQuery("update transfers_view " +
-                  "set pending = false, succeeded = $2, error_message = $3" +
+                  "set pending = false, succeeded = true " +
+                  "where id = $1")
+          .execute(Tuple.of(id))
+          .mapEmpty()
+      }
+      fun registerFailure(id: String, reason: String): Future<Void> {
+        val tuple = Tuple.of(id, reason)
+        log.info("Will project transfers failure for {}", tuple.deepToString())
+        return conn
+          .preparedQuery("update transfers_view " +
+                  "set pending = false, succeeded = false, error_message = $2 " +
                   "where id = $1")
           .execute(tuple)
           .mapEmpty()
       }
 
-      val (payload, metadata, id) = record.extract()
+      val (payload, _, id) = eventRecord.extract()
       return when (val eventName = payload.getString("type")) {
         "TransferRequested" -> request(id, payload)
-        "TransferConcluded" -> register(id, payload)
+        "TransferSucceeded" -> registerSuccess(id)
+        "TransferFailed" -> registerFailure(id, payload.getString("errorMessage"))
         else -> Future.failedFuture("Unknown event $eventName")
       }
     }

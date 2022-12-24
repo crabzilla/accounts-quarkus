@@ -6,27 +6,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.github.crabzilla.core.CommandHandler
 import io.github.crabzilla.core.CommandSession
 import io.github.crabzilla.core.EventHandler
+import io.github.crabzilla.example2.transfers.Transfer.Requested
 import io.github.crabzilla.example2.transfers.TransferCommand.RegisterResult
 import io.github.crabzilla.example2.transfers.TransferCommand.RequestTransfer
-import io.github.crabzilla.example2.transfers.TransferEvent.TransferConcluded
-import io.github.crabzilla.example2.transfers.TransferEvent.TransferRequested
+import io.github.crabzilla.example2.transfers.TransferEvent.*
 import io.github.crabzilla.stack.command.CommandServiceConfig
-import java.util.*
-
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
 @JsonSubTypes(
   JsonSubTypes.Type(TransferRequested::class, name = "TransferRequested"),
-  JsonSubTypes.Type(TransferConcluded::class, name = "TransferConcluded")
+  JsonSubTypes.Type(TransferSucceeded::class, name = "TransferSucceeded"),
+  JsonSubTypes.Type(TransferFailed::class, name = "TransferFailed")
 )
 sealed class TransferEvent {
-  data class TransferRequested(val id: UUID,
+  data class TransferRequested(val id: String,
                                val amount: Double = 0.00,
-                               val fromAccountId: UUID,
-                               val toAccountId: UUID) : TransferEvent()
-  data class TransferConcluded(val succeeded: Boolean, val errorMessage: String?) : TransferEvent()
-
+                               val fromAccountId: String,
+                               val toAccountId: String) : TransferEvent()
+  data class TransferSucceeded(val id: String) : TransferEvent()
+  data class TransferFailed(val id: String, val errorMessage: String) : TransferEvent()
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,56 +35,86 @@ sealed class TransferEvent {
   JsonSubTypes.Type(RegisterResult::class, name = "RegisterResult")
 )
 sealed class TransferCommand {
-  data class RequestTransfer(val id: UUID,
+  data class RequestTransfer(val id: String,
                              val amount: Double = 0.00,
-                             val fromAccountId: UUID,
-                             val toAccountId: UUID) : TransferCommand()
+                             val fromAccountId: String,
+                             val toAccountId: String) : TransferCommand()
   data class RegisterResult(val succeeded: Boolean, val errorMessage: String?) : TransferCommand()
 }
 
-data class Transfer(
-  val id: UUID,
-  val amount: Double = 0.00,
-  val fromAccountId: UUID,
-  val toAccountId: UUID,
-  val succeeded: Boolean?,
-  val errorMessage: String?
-) {
-  companion object {
-    fun fromEvent(event: TransferRequested): Transfer {
-      return Transfer(id = event.id, amount = event.amount, fromAccountId =  event.fromAccountId,
-        toAccountId = event.toAccountId, succeeded = null, errorMessage = null)
+
+class TransferAlreadyExists(id: String) : IllegalArgumentException("Transfer $id already exists")
+
+sealed class Transfer {
+  object Initial: Transfer() {
+    override fun toString(): String {
+      return "Transfer.Initial"
+    }
+    fun request(id: String, amount: Double, fromAccountId: String, toAccountId: String): List<TransferRequested> {
+      return listOf(TransferRequested(id, amount, fromAccountId, toAccountId))
     }
   }
+  data class Requested(val id: String,
+                  val amount: Double,
+                  val fromAccountId: String,
+                  val toAccountId: String): Transfer() {
+    fun setSuccess(): List<TransferEvent> {
+      return listOf(TransferSucceeded(this.id))
+    }
+    fun setFailed(reason: String): List<TransferEvent> {
+      return listOf(TransferFailed(this.id, reason))
+    }
+  }
+  data class Succeeded(val requested: Requested): Transfer()
+  data class Failed(val requested: Requested, val reason: String): Transfer()
 }
 
 val transferEventHandler = EventHandler<Transfer, TransferEvent> { state, event ->
-  when (event) {
-    is TransferRequested -> Transfer.fromEvent(event)
-    is TransferConcluded -> state!!.copy(succeeded = event.succeeded, errorMessage = event.errorMessage)
+  when (state) {
+    is Transfer.Initial ->
+      when (event) {
+        is TransferRequested -> Requested(event.id, event.amount, event.fromAccountId, event.toAccountId)
+        else -> state
+      }
+    is Requested ->
+      when (event) {
+        is TransferSucceeded -> Transfer.Succeeded(state)
+        is TransferFailed -> Transfer.Failed(state, event.errorMessage)
+        else -> state
+      }
+    else -> state
   }
 }
 
-class TransferAlreadyExists(id: UUID) : IllegalArgumentException("Transfer $id already exists")
-class TransferNotFound : NullPointerException("Transfer not found")
-
 class TransferCommandHandler : CommandHandler<Transfer, TransferCommand, TransferEvent>(transferEventHandler) {
-  override fun handle(command: TransferCommand, state: Transfer?): CommandSession<Transfer, TransferEvent> {
+
+  override fun handle(command: TransferCommand, state: Transfer): CommandSession<Transfer, TransferEvent> {
     return when (command) {
       is RequestTransfer -> {
-        with (command) {
-          if (state != null) throw TransferAlreadyExists(id)
-          withNew(listOf(TransferRequested(id, amount, fromAccountId, toAccountId)))
+        when (state) {
+          is Transfer.Initial -> {
+             with(state).execute {
+               state.request(command.id, command.amount, command.fromAccountId, command.toAccountId)
+             }
+          }
+          else -> throw TransferAlreadyExists(command.id)
         }
       }
       is RegisterResult -> {
-        if (state == null) throw TransferNotFound()
-        with(state).execute {
-          listOf(TransferConcluded(command.succeeded, command.errorMessage))
+        when (state) {
+          is Requested -> {
+            if (command.succeeded) {
+              with(state).execute { state.setSuccess() }
+            } else {
+              with(state).execute { state.setFailed(command.errorMessage!!) }
+            }
+          }
+          else -> throw buildException(state, command)
         }
       }
     }
   }
+
 }
 
 val transferComponent = CommandServiceConfig(
@@ -93,5 +122,6 @@ val transferComponent = CommandServiceConfig(
   TransferCommand::class,
   TransferEvent::class,
   transferEventHandler,
-  TransferCommandHandler()
+  TransferCommandHandler(),
+  Transfer.Initial
 )

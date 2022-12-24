@@ -18,24 +18,28 @@ import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.core.IsEqual.equalTo
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.util.*
 import javax.inject.Inject
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Accounts feature")
-class BasicScenarios {
+class BasicScenariosTest {
 
   @Inject
   lateinit var pgPool: PgPool
 
   @BeforeAll
-  fun cleanDatabase() {
-    pgPool.query("delete from events").execute()
-      .flatMap { pgPool.query("delete from commands").execute() }
-      .flatMap { pgPool.query("delete from accounts_view").execute() }
-      .flatMap { pgPool.query("delete from transfers_view").execute() }
+  fun cleanDatabaseBefore() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .await().indefinitely()
+  }
+
+  @AfterAll
+  fun cleanDatabaseAfter() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
       .await().indefinitely()
   }
 
@@ -57,7 +61,7 @@ class BasicScenarios {
   fun `when opening an account`() {
     val response: JsonObject =
       Given {
-        val request = OpenAccountRequest(UUID.randomUUID().toString(), "test")
+        val request = OpenAccountRequest("cpf1", "acct1")
         body(request)
         contentType(ContentType.JSON)
       } When {
@@ -85,7 +89,7 @@ class BasicScenarios {
         JsonArray(body().asString())
       }
     val record1 = response.getJsonObject(0)
-    assertEquals(id, UUID.fromString(record1.getString("id")))
+    assertEquals(id, record1.getString("id"))
     assertEquals(0L, record1.getLong("balance"))
   }
 
@@ -142,14 +146,12 @@ class BasicScenarios {
         }
     } matches { json ->
       with(json!!) {
-        println(this)
-        UUID.fromString(getString("id")) == id &&
-                getLong("balance")== 400L
+        getString("id") == id && getLong("balance")== 400L
       }
     }
   }
 
   companion object {
-    var id: UUID = UUID.randomUUID()
+    var id: String = "acct#1"
   }
 }

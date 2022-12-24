@@ -20,26 +20,31 @@ import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.core.IsEqual
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.util.*
 import javax.inject.Inject
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Transfer feature")
-internal class BasicScenarios {
+internal class BasicScenariosTest {
 
   @Inject
   lateinit var pgPool: PgPool
 
   @BeforeAll
-  fun cleanDatabase() {
-    pgPool.query("delete from events").execute()
-      .flatMap { pgPool.query("delete from commands").execute() }
-      .flatMap { pgPool.query("delete from accounts_view").execute() }
-      .flatMap { pgPool.query("delete from transfers_view").execute() }
+  fun cleanDatabaseBefore() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
       .await().indefinitely()
   }
+
+  @AfterAll
+  fun cleanDatabaseAfter() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .await().indefinitely()
+  }
+
 
   @Test
   @Order(1)
@@ -59,7 +64,7 @@ internal class BasicScenarios {
   fun `creating Account 1`() {
     val response: JsonObject =
       Given {
-        val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct1")
+        val request = OpenAccountRequest("cpf1", "acct1")
         body(request)
         contentType(ContentType.JSON)
       } When {
@@ -77,7 +82,7 @@ internal class BasicScenarios {
   fun `creating Account 2`() {
     val response: JsonObject =
       Given {
-        val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct2")
+        val request = OpenAccountRequest("cpf2", "acct2")
         body(request)
         contentType(ContentType.JSON)
       } When {
@@ -141,9 +146,9 @@ internal class BasicScenarios {
       val jsonArray = JsonArray(responseAsString)
       val json1 = jsonArray.getJsonObject(0)
       val json2 = jsonArray.getJsonObject(1)
-      UUID.fromString(json1.getString("id")) == account1Id &&
+              json1.getString("id") == account1Id &&
               json1.getLong("balance") == 400L &&
-              UUID.fromString(json2.getString("id")) == account2Id &&
+              json2.getString("id") == account2Id &&
               json2.getLong("balance") == 600L
     }
 
@@ -163,7 +168,7 @@ internal class BasicScenarios {
     } matches { responseAsString ->
       val jsonArray = JsonArray(responseAsString)
       val json = jsonArray.getJsonObject(0)
-      transferId == UUID.fromString(json.getString("id")) &&
+      transferId == json.getString("id") &&
         json.getBoolean("pending") == false &&
         json.getBoolean("succeeded") == true &&
         json.getString("error_message") == null
@@ -172,8 +177,8 @@ internal class BasicScenarios {
   }
 
   companion object {
-    val account1Id: UUID = UUID.randomUUID()
-    val account2Id: UUID = UUID.randomUUID()
-    val transferId: UUID = UUID.randomUUID()
+    const val account1Id: String = "acct#1"
+    const val account2Id: String = "acct#2"
+    const val transferId: String = "transfer#1"
   }
 }

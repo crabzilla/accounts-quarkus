@@ -19,24 +19,28 @@ import org.awaitility.kotlin.untilCallTo
 import org.hamcrest.core.IsEqual
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import java.util.*
 import javax.inject.Inject
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Transfer errors")
-internal class ErrorsScenarios {
+internal class ErrorsScenariosTest {
 
   @Inject
   lateinit var pgPool: PgPool
 
   @BeforeAll
-  fun cleanDatabase() {
-    pgPool.query("delete from events").execute()
-      .flatMap { pgPool.query("delete from commands").execute() }
-      .flatMap { pgPool.query("delete from accounts_view").execute() }
-      .flatMap { pgPool.query("delete from transfers_view").execute() }
+  fun cleanDatabaseBefore() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
+      .await().indefinitely()
+  }
+
+  @AfterAll
+  fun cleanDatabaseAfter() {
+    pgPool.query("truncate events, commands, accounts_view, transfers_view restart identity").execute()
+      .flatMap { pgPool.query("update subscriptions set sequence = 0").execute() }
       .await().indefinitely()
   }
 
@@ -58,7 +62,7 @@ internal class ErrorsScenarios {
   fun `creating Account 1`() {
     val response: JsonObject =
       Given {
-        val request = OpenAccountRequest(UUID.randomUUID().toString(), "acct1")
+        val request = OpenAccountRequest("cpf1", "acct1")
         body(request)
         contentType(ContentType.JSON)
       } When {
@@ -104,7 +108,7 @@ internal class ErrorsScenarios {
       val jsonArray = JsonArray(responseAsString)
       val json1 = jsonArray.getJsonObject(0)
       jsonArray.size() == 1
-              && UUID.fromString(json1.getString("id")) == account1Id
+              && json1.getString("id") == account1Id
               && json1.getLong("balance") == 0L
     }
   }
@@ -123,17 +127,18 @@ internal class ErrorsScenarios {
     } matches { responseAsString ->
       val jsonArray = JsonArray(responseAsString)
       val json = jsonArray.getJsonObject(0)
-      transferId == UUID.fromString(json.getString("id")) &&
+      println(json.encodePrettily())
+      transferId == json.getString("id") &&
         json.getBoolean("pending") == false &&
         json.getBoolean("succeeded") == false &&
-        json.getString("error_message") == "Account $account1Id doesn't have enough balance"
+        json.getString("error_message").endsWith("Account $account1Id doesn't have enough balance")
     }
 
   }
 
   companion object {
-    val account1Id: UUID = UUID.randomUUID()
-    val account2Id: UUID = UUID.randomUUID()
-    val transferId: UUID = UUID.randomUUID()
+    const val account1Id: String = "acct#1"
+    const val account2Id: String = "acct#2"
+    const val transferId: String = "transfer#1"
   }
 }

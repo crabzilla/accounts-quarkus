@@ -18,7 +18,7 @@ export const options = {
 	};
 
 export default function () {
-  const id = create_UUID()
+  const id = Math.random() * 16
   const payload = JSON.stringify({cpf: id, name: id});
   const params = { headers: { 'Content-Type': 'application/json' } };
   const resp1 = http.put('http://0.0.0.0:8080/accounts/' + id, payload, params);

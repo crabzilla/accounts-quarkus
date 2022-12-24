@@ -43,10 +43,10 @@ internal class CrabzillaResource(private val pgPool: PgPool) {
       .onItem().transform { row: Row ->
         val eventMetadata = EventMetadata(
           row.getString("state_type"),
-          row.getUUID("state_id"),
-          row.getUUID("id"),
-          row.getUUID("correlation_id"),
-          row.getUUID("causation_id"),
+          row.getString("state_id"),
+          row.getString("id"),
+          row.getString("correlation_id"),
+          row.getString("causation_id"),
           row.getLong("sequence"),
           row.getInteger("version"),
           row.getString("event_type")
