@@ -54,16 +54,16 @@ class TransferService(
           transferController.handle(conn, transferId, registerSuccessCommand)
         }
     }
-    .onSuccess {
-      log.info("Success !!!")
-      promise.complete()
-    }.onFailure { error ->
-      // new transaction
-      log.info("Step 3 - Will register a failed transfers {}", error.message)
-      val registerFailureCommand = RegisterResult(false, error.message)
-      transferController.handle(transferId, registerFailureCommand)
-        .onSuccess { promise.complete() }
-    }
+      .onSuccess {
+        log.info("Success !!!")
+        promise.complete()
+      }.onFailure { error ->
+        // new transaction
+        log.info("Step 3 - Will register a failed transfers {}", error.message)
+        val registerFailureCommand = RegisterResult(false, error.message)
+        transferController.handle(transferId, registerFailureCommand)
+          .onSuccess { promise.complete() }
+      }
 
     return promise.future()
 

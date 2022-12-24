@@ -127,7 +127,6 @@ internal class ErrorsScenariosTest {
     } matches { responseAsString ->
       val jsonArray = JsonArray(responseAsString)
       val json = jsonArray.getJsonObject(0)
-      println(json.encodePrettily())
       transferId == json.getString("id") &&
         json.getBoolean("pending") == false &&
         json.getBoolean("succeeded") == false &&

@@ -29,7 +29,7 @@ class TransfersResource(private val pgPool: PgPool,
       .onItem().transformToMulti { set -> Multi.createFrom().iterable(set) }
       .onItem().transform { row: Row -> row.toJson() }
   }
-  
+
   @PUT
   @Path("/{stateId}")
   @Consumes(MediaType.APPLICATION_JSON)

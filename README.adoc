@@ -69,7 +69,7 @@ Note: on Mac M1 you will need to install and run K6 locally. I still have to fig
 Opening many accounts with 1000 virtual users during 60 seconds:
 
 ```
-docker run --network host -i loadimpact/k6 run --vus 1000 --duration 60s - <./k6/open-many-accounts.js
+docker run --network host -i loadimpact/k6 run - <./k6/open-many-accounts.js
 ```
 
 Note: on Mac M1 you will need to install and run K6 locally. I still have to figure out this bug.
