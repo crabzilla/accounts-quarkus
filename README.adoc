@@ -10,7 +10,7 @@ ifndef::sourcedir[:sourcedir: ../../main/java]
 
 = Accounts Quarkus
 
-image:https://img.shields.io/badge/crabzilla.v0.5.6-orange.svg[link="https://github.com/crabzilla/crabzilla"]
+image:https://img.shields.io/badge/crabzilla.v0.5.7-orange.svg[link="https://github.com/crabzilla/crabzilla"]
 https://github.com/crabzilla/accounts-quarkus/actions/workflows/blank.yml[image:https://github.com/crabzilla/accounts-quarkus/actions/workflows/blank.yml/badge.svg[CI]]
 https://codecov.io/gh/crabzilla/accounts-quarkus[image:https://codecov.io/gh/crabzilla/accounts-quarkus/branch/main/graph/badge.svg?[codecov]]
 
@@ -25,6 +25,7 @@ image::accounts.drawio.png[Overview]
 * Java 11
 * Maven
 * Docker compose
+* https://k6.io[K6] for running stress test
 
 == Building
 
@@ -59,7 +60,7 @@ Just open http://localhost:8080/q/swagger-ui/#
 Open an account 1 with 110.00 and 2 with 0.00 then make a 100.00 transfer from account 1 to 2:
 
 ```
-docker run --network host -i loadimpact/k6 run - <./k6/transfer.js
+k6 run - <./k6/transfer.js
 ```
 
 Note: on Mac M1 you will need to install and run K6 locally. I still have to figure out this bug.
@@ -69,10 +70,8 @@ Note: on Mac M1 you will need to install and run K6 locally. I still have to fig
 Opening many accounts with 1000 virtual users during 60 seconds:
 
 ```
-docker run --network host -i loadimpact/k6 run - <./k6/open-many-accounts.js
+k6 run - <./k6/open-many-accounts.js
 ```
-
-Note: on Mac M1 you will need to install and run K6 locally. I still have to figure out this bug.
 
 And you will see something like:
 
